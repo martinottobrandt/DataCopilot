@@ -7,7 +7,7 @@ import plotly.graph_objects as go
 import plotly.express as px
 
 st.set_page_config(layout="wide")
-st.title("Análise Exploratória de Contas Pendentes - Hospital")
+st.title("Análise de Contas Pendentes - Hospital")
 
 # Upload do arquivo
 uploaded_file = st.file_uploader("Faça upload da planilha Excel (.xlsx)", type=["xlsx"])
