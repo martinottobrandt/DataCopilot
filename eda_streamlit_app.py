@@ -5,6 +5,11 @@ import matplotlib.pyplot as plt
 import streamlit as st
 import plotly.graph_objects as go
 import plotly.express as px
+import locale
+
+# Usar formatação brasileira
+locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
+pd.options.display.float_format = lambda x: f'R$ {x:,.2f}'.replace(',', 'v').replace('.', ',').replace('v', '.')
 
 st.set_page_config(layout="wide")
 st.title("Análise de Contas Pendentes - Hospital")
@@ -42,7 +47,7 @@ if uploaded_file:
         Valor_Médio="mean",
         Valor_Máximo="max"
     ).sort_values(by="Valor_Total", ascending=False)
-    st.dataframe(resumo_convenio)
+    st.dataframe(resumo_convenio.style.format("R$ {:,.2f}"))
 
     st.subheader("Análise de Contas por Mês e Convênio")
     qtd_contas = pd.pivot_table(df, index="Convênio", columns="AnoMes", values="Conta", aggfunc=pd.Series.nunique, fill_value=0)
@@ -52,7 +57,7 @@ if uploaded_file:
     st.dataframe(qtd_contas)
 
     st.markdown("### Valor Total das Contas por Mês")
-    st.dataframe(valor_total)
+    st.dataframe(valor_total.style.format("R$ {:,.2f}"))
 
     st.subheader("Resumo por Etapa (Último Setor Destino)")
     resumo_etapa = df.groupby("Último Setor destino")["Valor conta"].agg(
@@ -60,7 +65,7 @@ if uploaded_file:
         Valor_Total="sum",
         Valor_Médio="mean"
     ).sort_values(by="Valor_Total", ascending=False)
-    st.dataframe(resumo_etapa)
+    st.dataframe(resumo_etapa.style.format("R$ {:,.2f}"))
 
     st.subheader("Contas com Valores Outliers")
     q1 = df["Valor conta"].quantile(0.25)
