@@ -52,6 +52,9 @@ if uploaded_file:
     df = df[df["Médico executor"].isin(medicos_filtrados)]
 
     with st.expander("📊 Análises Gerais"):
+        st.subheader("Distribuição Geral das Contas")
+        fig_dist = px.histogram(df, x="Valor conta", nbins=50, title="Distribuição dos Valores das Contas")
+        st.plotly_chart(fig_dist, use_container_width=True)
         st.subheader("Estatísticas Descritivas Gerais")
         st.dataframe(df["Valor conta"].describe().rename({"count": "Quantidade"}).to_frame().style.format({"Valor conta": formatar_moeda}))
 
@@ -146,9 +149,8 @@ if uploaded_file:
         st.plotly_chart(sankey_fig, use_container_width=True)
 
     with st.expander("🧑‍⚕️ Informações por Médico"):
-    st.subheader("Análise de Contas por Médico")
-                "Médicos:", options=medicos_disponiveis, default=medicos_disponiveis
-            )
+        st.subheader("Análise de Contas por Médico")
+        df_medico = df.copy()
         df_medico = df[df["Médico executor"].isin(medicos_filtrados)]
 
         if not df_medico.empty:
