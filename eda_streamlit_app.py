@@ -80,7 +80,7 @@ if uploaded_file:
     outliers = df[df["Valor conta"] > limite_superior]
     outliers["Data entrada"] = outliers["Data entrada"].dt.strftime('%d/%m/%Y')
 outliers_ordenadas = outliers.sort_values(by=["Valor conta", "Data entrada"], ascending=[False, True])
-    colunas_outliers = ["Status", "Data entrada", "Valor conta"] + [col for col in outliers_ordenadas.columns if col not in ["Status", "Data entrada", "Valor conta"]]
+        colunas_outliers = ["Status", "Data entrada", "Valor conta"] + [col for col in outliers_ordenadas.columns if col not in ["Status", "Data entrada", "Valor conta"]]
 st.dataframe(outliers_ordenadas[colunas_outliers].style.format({"Valor conta": formatar_moeda}))
 
     st.subheader("Boxplot de Valores por Convênio")
