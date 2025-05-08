@@ -31,13 +31,25 @@ if uploaded_file:
     df["Data entrada"] = pd.to_datetime(df["Data entrada"], errors="coerce")
     df["AnoMes"] = df["Data entrada"].dt.to_period("M").astype(str)
 
-    # Filtro por convênio no cabeçalho
+    # Filtros gerais de Convênio e Médico
+    st.sidebar.header("Filtros Gerais")
+
     convenios_disponiveis = sorted(df["Convênio"].dropna().unique())
-    with st.expander("🔎 Filtrar Convênios"):
-        convenios_filtrados = st.multiselect(
-            "Convênios:", options=convenios_disponiveis, default=convenios_disponiveis
-        )
+    todos_conv = st.sidebar.checkbox("Selecionar todos os convênios", value=True)
+    if todos_conv:
+        convenios_filtrados = convenios_disponiveis
+    else:
+        convenios_filtrados = st.sidebar.multiselect("Convênios:", options=convenios_disponiveis, default=[])
+
+    medicos_disponiveis = sorted(df["Médico executor"].dropna().unique())
+    todos_med = st.sidebar.checkbox("Selecionar todos os médicos", value=True)
+    if todos_med:
+        medicos_filtrados = medicos_disponiveis
+    else:
+        medicos_filtrados = st.sidebar.multiselect("Médicos:", options=medicos_disponiveis, default=[])
+
     df = df[df["Convênio"].isin(convenios_filtrados)]
+    df = df[df["Médico executor"].isin(medicos_filtrados)]
 
     with st.expander("📊 Análises Gerais"):
         st.subheader("Estatísticas Descritivas Gerais")
@@ -134,10 +146,7 @@ if uploaded_file:
         st.plotly_chart(sankey_fig, use_container_width=True)
 
     with st.expander("🧑‍⚕️ Informações por Médico"):
-        st.subheader("Análise de Contas por Médico")
-        medicos_disponiveis = sorted(df["Médico executor"].dropna().unique())
-        with st.expander("👨‍⚕️ Filtrar Médicos"):
-            medicos_filtrados = st.multiselect(
+    st.subheader("Análise de Contas por Médico")
                 "Médicos:", options=medicos_disponiveis, default=medicos_disponiveis
             )
         df_medico = df[df["Médico executor"].isin(medicos_filtrados)]
