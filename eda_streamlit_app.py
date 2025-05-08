@@ -126,6 +126,12 @@ if uploaded_file:
             (f"{zeradas_df.shape[0]} contas estão com valor zerado.", output_zeradas, "contas_zeradas.xlsx", "zeradas"),
             (f"{sem_alta_df.shape[0]} contas estão com pacientes sem alta.", output_sem_alta, "contas_sem_alta.xlsx", "sem_alta"),
             (f"{negativos_df.shape[0]} contas possuem valor negativo.", output_negativos, "contas_valor_negativo.xlsx", "negativos"),
+            (f"{abaixo_mediana_df.shape[0]} contas estão abaixo da mediana ({formatar_moeda(df['Valor conta'].median())}).", output_abaixo, "contas_abaixo_mediana.xlsx", "abaixo_mediana")
+        ]} contas são outliers (acima de {formatar_moeda(limite_superior)}).", output_outliers, "contas_outliers.xlsx", "outliers"),
+            (f"{antigas_df.shape[0]} contas com mais de 90 dias desde a entrada.", output_antigas, "contas_90_dias.xlsx", "antigas"),
+            (f"{zeradas_df.shape[0]} contas estão com valor zerado.", output_zeradas, "contas_zeradas.xlsx", "zeradas"),
+            (f"{sem_alta_df.shape[0]} contas estão com pacientes sem alta.", output_sem_alta, "contas_sem_alta.xlsx", "sem_alta"),
+            (f"{negativos_df.shape[0]} contas possuem valor negativo.", output_negativos, "contas_valor_negativo.xlsx", "negativos"),
             (f"{abaixo_mediana_df.shape[0]} contas estão abaixo da mediana ({formatar_moeda(df['Valor conta'].median())}).", output_abaixo, "contas_abaixo_mediana.xlsx", "abaixo_mediana"),
         ]
 
