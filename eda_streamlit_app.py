@@ -722,7 +722,7 @@ with tab5:  # Ensure consistent indentation
                 - Os pontos individuais são valores específicos de cada conta
                 """)
             
-    elif viz_type == "TreeMap de Valor por Convênio":
+        elif viz_type == "TreeMap de Valor por Convênio":
                 st.markdown("#### TreeMap de Valor Total por Convênio")
                 
                 df_treemap = df_filtrado.groupby("Convênio")["Valor conta"].sum().reset_index()
@@ -744,7 +744,7 @@ with tab5:  # Ensure consistent indentation
                 Quanto maior o retângulo, maior a participação do convênio no valor total pendente.
                 """)
             
-    elif viz_type == "Distribuição de Valores":
+        elif viz_type == "Distribuição de Valores":
                 st.markdown("#### Distribuição dos Valores das Contas")
                 
                 # Criar histograma com plotly
