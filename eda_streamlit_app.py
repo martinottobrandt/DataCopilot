@@ -96,31 +96,47 @@ if uploaded_file:
         with col1:
             st.markdown(f"- {zeradas_df.shape[0]} contas estão com valor zerado.")
         with col2:
-            st.download_button(label="⬇️", data=zeradas_df.to_csv(index=False).encode('utf-8'), file_name="contas_zeradas.csv", key="zeradas")
+            from io import BytesIO
+        output_zeradas = BytesIO()
+        with pd.ExcelWriter(output_zeradas, engine='xlsxwriter') as writer:
+            zeradas_df.to_excel(writer, index=False, sheet_name="Zeradas")
+        st.download_button(label="⬇️", data=output_zeradas.getvalue(), file_name="contas_zeradas.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", key="zeradas")
 
         col1, col2 = st.columns([0.85, 0.15])
         with col1:
             st.markdown(f"- {sem_alta_df.shape[0]} contas estão com pacientes sem alta.")
         with col2:
-            st.download_button(label="⬇️", data=sem_alta_df.to_csv(index=False).encode('utf-8'), file_name="contas_sem_alta.csv", key="sem_alta")
+            output_sem_alta = BytesIO()
+        with pd.ExcelWriter(output_sem_alta, engine='xlsxwriter') as writer:
+            sem_alta_df.to_excel(writer, index=False, sheet_name="Sem Alta")
+        st.download_button(label="⬇️", data=output_sem_alta.getvalue(), file_name="contas_sem_alta.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", key="sem_alta")
 
         col1, col2 = st.columns([0.85, 0.15])
         with col1:
             st.markdown(f"- {abaixo_mediana_df.shape[0]} contas estão abaixo da mediana (R$ {df['Valor conta'].median():,.2f}).")
         with col2:
-            st.download_button(label="⬇️", data=abaixo_mediana_df.to_csv(index=False).encode('utf-8'), file_name="contas_abaixo_mediana.csv", key="abaixo_mediana")
+            output_abaixo = BytesIO()
+        with pd.ExcelWriter(output_abaixo, engine='xlsxwriter') as writer:
+            abaixo_mediana_df.to_excel(writer, index=False, sheet_name="Abaixo Mediana")
+        st.download_button(label="⬇️", data=output_abaixo.getvalue(), file_name="contas_abaixo_mediana.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", key="abaixo_mediana")
 
         col1, col2 = st.columns([0.85, 0.15])
         with col1:
             st.markdown(f"- {outliers_df.shape[0]} contas são outliers (acima de R$ {limite_superior:,.2f}).")
         with col2:
-            st.download_button(label="⬇️", data=outliers_df.to_csv(index=False).encode('utf-8'), file_name="contas_outliers.csv", key="outliers")
+            output_outliers = BytesIO()
+        with pd.ExcelWriter(output_outliers, engine='xlsxwriter') as writer:
+            outliers_df.to_excel(writer, index=False, sheet_name="Outliers")
+        st.download_button(label="⬇️", data=output_outliers.getvalue(), file_name="contas_outliers.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", key="outliers")
 
         col1, col2 = st.columns([0.85, 0.15])
         with col1:
             st.markdown(f"- {antigas_df.shape[0]} contas com mais de 90 dias desde a entrada.")
         with col2:
-            st.download_button(label="⬇️", data=antigas_df.to_csv(index=False).encode('utf-8'), file_name="contas_90_dias.csv", key="antigas")
+            output_antigas = BytesIO()
+        with pd.ExcelWriter(output_antigas, engine='xlsxwriter') as writer:
+            antigas_df.to_excel(writer, index=False, sheet_name="90+ Dias")
+        st.download_button(label="⬇️", data=output_antigas.getvalue(), file_name="contas_90_dias.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", key="antigas")
 
         # Botão para baixar CSV com os dados brutos dos insights
         insights_dados = {
