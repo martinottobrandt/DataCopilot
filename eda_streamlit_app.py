@@ -144,4 +144,4 @@ if uploaded_file:
                 value=sankey_df["valor"]
             )
         ))
-        st.plotly_chart(fig_sankey, use_container_width=True))
+        st.plotly_chart(fig_sankey, use_container_width=True)
