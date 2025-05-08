@@ -689,13 +689,13 @@ fig_heatmap.update_layout(height=400)
 st.plotly_chart(fig_heatmap, use_container_width=True)
 
         
-        with tab5:
-            st.markdown("### 📊 Visualizações Avançadas")
-            
-            viz_type = st.selectbox(
-                "Selecione o tipo de visualização:",
-                ["Boxplot por Convênio", "TreeMap de Valor por Convênio", "Distribuição de Valores", "Mapa de Calor por Mês/Dia"]
-            )
+          with tab5:  # Ensure consistent indentation
+        st.markdown("### 📊 Visualizações Avançadas")
+        
+        viz_type = st.selectbox(
+            "Selecione o tipo de visualização:",
+            ["Boxplot por Convênio", "TreeMap de Valor por Convênio", "Distribuição de Valores", "Mapa de Calor por Mês/Dia"]
+        )
             
             if viz_type == "Boxplot por Convênio":
                 st.markdown("#### Boxplot por Convênio")
