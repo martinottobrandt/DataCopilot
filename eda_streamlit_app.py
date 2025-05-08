@@ -54,15 +54,28 @@ if uploaded_file:
     df = df[df["Médico executor"].isin(medicos_filtrados)]
 
     with st.expander("📊 Análises Gerais"):
+        # Cálculo prévio para insights
+        q1 = df["Valor conta"].quantile(0.25)
+        q3 = df["Valor conta"].quantile(0.75)
+        iqr = q3 - q1
+        limite_superior = q3 + 1.5 * iqr
+        outliers = df[df["Valor conta"] > limite_superior]
+
+        resumo_convenio = df.groupby("Convênio")["Valor conta"].agg(
+            Quantidade="count",
+            Valor_Total="sum"
+        ).sort_values(by="Valor_Total", ascending=False)
+
+        contas_90_dias = df[df["Data entrada"] < pd.Timestamp.today() - pd.Timedelta(days=90)]
+
         st.subheader("Distribuição Geral das Contas")
-        st.markdown("""
+        st.markdown(f"""
         **Principais insights iniciais:**
-        - Cerca de {:.0f}% das contas possuem valor abaixo de R$ {:.2f}, sugerindo foco em resolução de volume com baixo impacto financeiro.
-        - {} contas estão acima de R$ {:.2f} (outliers), recomendando revisão prioritária e validação de glosas ou auditoria específica.
-        - Os convênios {} concentram {:.0f}% do valor total em aberto e devem ser tratados com régua especial de cobrança.
-        - Identificamos {} contas com mais de 90 dias desde a entrada, indicando falha de processo de fechamento ou cobrança.
-        """.format(
-            (df["Valor conta"] < df["Valor conta"].median()).mean()*100,
+        - Cerca de {(df["Valor conta"] < df["Valor conta"].median()).mean()*100:.0f}% das contas possuem valor abaixo de R$ {df["Valor conta"].median():,.2f}, sugerindo foco em resolução de volume com baixo impacto financeiro.
+        - {outliers.shape[0]} contas estão acima de R$ {limite_superior:,.2f} (outliers), recomendando revisão prioritária e validação de glosas ou auditoria específica.
+        - Os convênios {', '.join(resumo_convenio.head(2).index)} concentram {resumo_convenio.head(2)['Valor_Total'].sum() / resumo_convenio['Valor_Total'].sum() * 100:.0f}% do valor total em aberto e devem ser tratados com régua especial de cobrança.
+        - Identificamos {contas_90_dias.shape[0]} contas com mais de 90 dias desde a entrada, indicando falha de processo de fechamento ou cobrança.
+        """).mean()*100,
             df["Valor conta"].median(),
             outliers.shape[0],
             df["Valor conta"].quantile(0.75) + 1.5 * (df["Valor conta"].quantile(0.75) - df["Valor conta"].quantile(0.25)),
