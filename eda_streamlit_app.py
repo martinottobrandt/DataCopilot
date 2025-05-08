@@ -679,31 +679,17 @@ if uploaded_file:
             pivot_med_conv = pivot_med_conv.fillna(0)
             
 # Criar mapa de calor com Plotly
-with col2:
-    st.markdown("#### Relação Médico x Convênio")
+fig_heatmap = px.imshow(
+    pivot_med_conv,
+    labels=dict(x="Convênio", y="Médico executor", color="Valor Total"),
+    text_auto=True  # ou text_auto='.2s' para formato numérico simples
+)
 
-    # Selecionar top 5 médicos
-    top5_medicos = resumo_medico.head(5).index.tolist()
-    df_med_conv = df_filtrado[df_filtrado["Médico executor"].isin(top5_medicos)]
-
-    # Agrupar por médico e convênio
-    med_conv = df_med_conv.groupby(["Médico executor", "Convênio"])["Valor conta"].sum().reset_index()
-
-    # Criar heatmap
-    pivot_med_conv = med_conv.pivot(index="Médico executor", columns="Convênio", values="Valor conta")
-    pivot_med_conv = pivot_med_conv.fillna(0)
-
-    fig_heatmap = px.imshow(
-        pivot_med_conv,
-        labels=dict(x="Convênio", y="Médico executor", color="Valor Total"),
-        text_auto=True
-    )
-
-    fig_heatmap.update_layout(height=400)
-    st.plotly_chart(fig_heatmap, use_container_width=True)
+fig_heatmap.update_layout(height=400)
+st.plotly_chart(fig_heatmap, use_container_width=True)
 
         
-        with tab5:
+with tab5:
             st.markdown("### 📊 Visualizações Avançadas")
             
             viz_type = st.selectbox(
