@@ -348,7 +348,7 @@ if uploaded_file:
                 (f"{zeradas_df.shape[0]} contas estão com valor zerado.", 
                  gerar_excel_bytes(zeradas_df, "Zeradas"), "contas_zeradas.xlsx", "zeradas"),
                 
-                (f"{sem_alta_df.shape[0]} contas estão com pacientes sem alta." if not sem_alta_df.empty else "Não foram identificadas contas sem alta.", 
+                (f"{sem_alta_df.shape[0]} contas estão com pacientes sem alta." if not sem_alta_df.notnull else "Não foram identificadas contas sem alta.", 
                  gerar_excel_bytes(sem_alta_df, "Sem Alta"), "contas_sem_alta.xlsx", "sem_alta"),
                 
                 (f"{negativos_df.shape[0]} contas possuem valor negativo.", 
