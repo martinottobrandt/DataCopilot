@@ -39,41 +39,33 @@ if uploaded_file:
         )
     df = df[df["Convênio"].isin(convenios_filtrados)]
 
-    st.subheader("Estatísticas Descritivas Gerais")
-    st.dataframe(df["Valor conta"].describe().rename({"count": "Quantidade"}).to_frame().style.format({"Valor conta": formatar_moeda}))
+    with st.expander("📊 Análises Gerais"):
+        st.subheader("Estatísticas Descritivas Gerais")
+        st.dataframe(df["Valor conta"].describe().rename({"count": "Quantidade"}).to_frame().style.format({"Valor conta": formatar_moeda})).rename({"count": "Quantidade"}).to_frame().style.format({"Valor conta": formatar_moeda}))
 
-    st.subheader("Resumo por Convênio")
-    resumo_convenio = df.groupby("Convênio")["Valor conta"].agg(
-        Quantidade="count",
-        Valor_Total="sum",
-        Valor_Médio="mean",
-        Valor_Máximo="max"
-    ).sort_values(by="Valor_Total", ascending=False)
-    st.dataframe(resumo_convenio.style.format({
-        "Valor_Total": formatar_moeda,
-        "Valor_Médio": formatar_moeda,
-        "Valor_Máximo": formatar_moeda
-    }))
+    with st.expander("📁 Informações por Convênio"):
+        st.subheader("Resumo por Convênio")
+        st.dataframe(resumo_convenio.style.format({
+            "Valor_Total": formatar_moeda,
+            "Valor_Médio": formatar_moeda,
+            "Valor_Máximo": formatar_moeda
+        })))
 
     qtd_contas = pd.pivot_table(df, index="Convênio", columns="AnoMes", values="Conta", aggfunc=pd.Series.nunique, fill_value=0)
     valor_total = pd.pivot_table(df, index="Convênio", columns="AnoMes", values="Valor conta", aggfunc="sum", fill_value=0)
 
-    st.markdown("### Quantidade de Contas Distintas por Mês")
-    st.dataframe(qtd_contas.style.format(na_rep='').set_caption("Quantidade de Contas Distintas por Mês"))
+            st.markdown("### Quantidade de Contas Distintas por Mês")
+        st.dataframe(qtd_contas.style.format(na_rep='').set_caption("Quantidade de Contas Distintas por Mês")).set_caption("Quantidade de Contas Distintas por Mês"))
 
-    st.markdown("### Valor Total das Contas por Mês")
-    st.dataframe(valor_total.style.format(formatar_moeda).set_caption("Valor Total das Contas por Mês"))
+            st.markdown("### Valor Total das Contas por Mês")
+        st.dataframe(valor_total.style.format(formatar_moeda).set_caption("Valor Total das Contas por Mês")).set_caption("Valor Total das Contas por Mês"))
 
-    st.subheader("Resumo por Etapa (Último Setor Destino)")
-    resumo_etapa = df.groupby("Último Setor destino")["Valor conta"].agg(
-        Quantidade="count",
-        Valor_Total="sum",
-        Valor_Médio="mean"
-    ).sort_values(by="Valor_Total", ascending=False)
-    st.dataframe(resumo_etapa.style.format({
-        "Valor_Total": formatar_moeda,
-        "Valor_Médio": formatar_moeda
-    }))
+    with st.expander("📂 Informações por Etapa"):
+        st.subheader("Resumo por Etapa (Último Setor Destino)")
+        st.dataframe(resumo_etapa.style.format({
+            "Valor_Total": formatar_moeda,
+            "Valor_Médio": formatar_moeda
+        })))
 
     st.subheader("Contas com Valores Outliers")
     q1 = df["Valor conta"].quantile(0.25)
@@ -92,17 +84,17 @@ if uploaded_file:
     colunas_antigas = ["Status", "Data entrada", "Valor conta"] + [col for col in contas_antigas.columns if col not in ["Status", "Data entrada", "Valor conta"]]
     st.dataframe(contas_antigas[colunas_antigas].style.format({"Valor conta": formatar_moeda}))
 
-    st.subheader("Boxplot de Valores por Convênio")
-    plt.figure(figsize=(10, 5))
-    sns.boxplot(data=df, x="Convênio", y="Valor conta")
-    plt.xticks(rotation=90)
-    st.pyplot(plt)
+            st.subheader("Boxplot de Valores por Convênio")
+        plt.figure(figsize=(10, 5))
+        sns.boxplot(data=df, x="Convênio", y="Valor conta")
+        plt.xticks(rotation=90)
+        st.pyplot(plt)
 
-    st.subheader("TreeMap de Valor Total por Convênio")
-    df_treemap = df.groupby("Convênio")["Valor conta"].sum().reset_index()
-    fig_tree = px.treemap(df_treemap, path=["Convênio"], values="Valor conta",
-                          title="Distribuição do Valor Total das Contas por Convênio")
-    st.plotly_chart(fig_tree, use_container_width=True)
+            st.subheader("TreeMap de Valor Total por Convênio")
+        df_treemap = df.groupby("Convênio")["Valor conta"].sum().reset_index()
+        fig_tree = px.treemap(df_treemap, path=["Convênio"], values="Valor conta",
+                              title="Distribuição do Valor Total das Contas por Convênio")
+        st.plotly_chart(fig_tree, use_container_width=True)
 
     st.subheader("Fluxo Sankey: Status → Convênio")
     origem_sankey = df["Status"].fillna("Desconhecido")
@@ -127,7 +119,8 @@ if uploaded_file:
     sankey_fig.update_layout(title_text="Fluxo das Contas: Status → Convênio", font_size=10)
     st.plotly_chart(sankey_fig, use_container_width=True)
 
-    st.subheader("Análise de Contas por Médico")
+    with st.expander("🧑‍⚕️ Informações por Médico"):
+        st.subheader("Análise de Contas por Médico")
     medicos_disponiveis = sorted(df["Médico executor"].dropna().unique())
     with st.expander("👨‍⚕️ Filtrar Médicos"):
         medicos_filtrados = st.multiselect(
