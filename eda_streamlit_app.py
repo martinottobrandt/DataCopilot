@@ -79,8 +79,8 @@ if uploaded_file:
     limite_superior = q3 + 1.5 * iqr
     outliers = df[df["Valor conta"] > limite_superior]
     outliers["Data entrada"] = outliers["Data entrada"].dt.strftime('%d/%m/%Y')
-    outliers_ordenadas = outliers.sort_values(by="Valor conta", ascending=False)
-        colunas_outliers = ["Status", "Data entrada", "Valor conta"] + [col for col in outliers_ordenadas.columns if col not in ["Status", "Data entrada", "Valor conta"]]
+        outliers_ordenadas = outliers.sort_values(by="Valor conta", ascending=False)
+    colunas_outliers = ["Status", "Data entrada", "Valor conta"] + [col for col in outliers_ordenadas.columns if col not in ["Status", "Data entrada", "Valor conta"]]
         st.dataframe(outliers_ordenadas[colunas_outliers].style.format({"Valor conta": formatar_moeda}))
 
     st.subheader("Contas Mais Antigas")
@@ -127,8 +127,8 @@ if uploaded_file:
 
     st.subheader("Análise de Contas por Médico")
     medicos_disponiveis = sorted(df["Médico executor"].dropna().unique())
-    medicos_filtrados = st.multiselect("Filtrar por Médico:", options=medicos_disponiveis, default=medicos_disponiveis)
-        df_medico = df[df["Médico executor"].isin(medicos_filtrados)]
+        medicos_filtrados = st.multiselect("Filtrar por Médico:", options=medicos_disponiveis, default=medicos_disponiveis)
+    df_medico = df[df["Médico executor"].isin(medicos_filtrados)]
 
     if not df_medico.empty:
         df_medico["Mês"] = df_medico["Data entrada"].dt.to_period("M").astype(str)
