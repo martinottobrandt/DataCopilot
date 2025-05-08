@@ -107,7 +107,7 @@ if uploaded_file:
             st.markdown(f"- {sem_alta_df.shape[0]} contas estão com pacientes sem alta.")
         with col2:
             output_sem_alta = BytesIO()
-        with pd.ExcelWriter(output_sem_alta, engine='xlsxwriter') as writer:
+        with pd.ExcelWriter(output_sem_alta, engine='openpyxl') as writer:
             sem_alta_df.to_excel(writer, index=False, sheet_name="Sem Alta")
         st.download_button(label="⬇️", data=output_sem_alta.getvalue(), file_name="contas_sem_alta.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", key="sem_alta")
 
@@ -116,7 +116,7 @@ if uploaded_file:
             st.markdown(f"- {abaixo_mediana_df.shape[0]} contas estão abaixo da mediana (R$ {df['Valor conta'].median():,.2f}).")
         with col2:
             output_abaixo = BytesIO()
-        with pd.ExcelWriter(output_abaixo, engine='xlsxwriter') as writer:
+        with pd.ExcelWriter(output_abaixo, engine='openpyxl') as writer:
             abaixo_mediana_df.to_excel(writer, index=False, sheet_name="Abaixo Mediana")
         st.download_button(label="⬇️", data=output_abaixo.getvalue(), file_name="contas_abaixo_mediana.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", key="abaixo_mediana")
 
@@ -125,7 +125,7 @@ if uploaded_file:
             st.markdown(f"- {outliers_df.shape[0]} contas são outliers (acima de R$ {limite_superior:,.2f}).")
         with col2:
             output_outliers = BytesIO()
-        with pd.ExcelWriter(output_outliers, engine='xlsxwriter') as writer:
+        with pd.ExcelWriter(output_outliers, engine='openpyxl') as writer:
             outliers_df.to_excel(writer, index=False, sheet_name="Outliers")
         st.download_button(label="⬇️", data=output_outliers.getvalue(), file_name="contas_outliers.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", key="outliers")
 
@@ -134,7 +134,7 @@ if uploaded_file:
             st.markdown(f"- {antigas_df.shape[0]} contas com mais de 90 dias desde a entrada.")
         with col2:
             output_antigas = BytesIO()
-        with pd.ExcelWriter(output_antigas, engine='xlsxwriter') as writer:
+        with pd.ExcelWriter(output_antigas, engine='openpyxl') as writer:
             antigas_df.to_excel(writer, index=False, sheet_name="90+ Dias")
         st.download_button(label="⬇️", data=output_antigas.getvalue(), file_name="contas_90_dias.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", key="antigas")
 
