@@ -25,8 +25,13 @@ def gerar_insights(df):
 
     contas_90_dias = df[df["Data entrada"] < pd.Timestamp.today() - pd.Timedelta(days=90)]
 
+    zeradas = df[df["Valor conta"] == 0].shape[0]
+    sem_alta = df[df["Status atendimento"].str.lower().str.contains("sem alta", na=False)].shape[0]
+
     return f"""
     **Principais insights iniciais:**
+    - {zeradas} contas estão com valor zerado, o que pode indicar falha de fechamento, isenção contratual ou erro de sistema.
+    - {sem_alta} contas estão associadas a pacientes sem alta, o que pode impactar o ciclo de faturamento e deve ser monitorado.**
     - Cerca de {(df["Valor conta"] < df["Valor conta"].median()).mean()*100:.0f}% das contas possuem valor abaixo de R$ {df["Valor conta"].median():,.2f}, sugerindo foco em resolução de volume com baixo impacto financeiro.
     - {outliers.shape[0]} contas estão acima de R$ {limite_superior:,.2f} (outliers), recomendando revisão prioritária e validação de glosas ou auditoria específica.
     - Os convênios {', '.join(resumo_convenio.head(2).index)} concentram {resumo_convenio.head(2)["Valor_Total"].sum() / resumo_convenio["Valor_Total"].sum() * 100:.0f}% do valor total em aberto e devem ser tratados com régua especial de cobrança.
@@ -80,12 +85,23 @@ if uploaded_file:
         st.subheader("Distribuição Geral das Contas")
         st.markdown(gerar_insights(df))
 
-        fig_dist = px.histogram(df, x="Valor conta", nbins=50, title="Distribuição dos Valores das Contas")
+        df_mes = df.groupby("AnoMes").agg(Quantidade=("Conta", "nunique"), Total=("Valor conta", "sum")).reset_index()
+        fig_dist = px.bar(df_mes, x="AnoMes", y=["Quantidade", "Total"], barmode="group",
+                          title="Total de Contas e Valores por Mês", labels={"value": "Total", "AnoMes": "Mês"})
         st.plotly_chart(fig_dist, use_container_width=True)
 
         st.subheader("Estatísticas Descritivas Gerais")
-        estatisticas = df["Valor conta"].describe().rename({"count": "Quantidade"}).to_frame()
-        estatisticas.loc[["mean", "min", "25%", "50%", "75%", "max"]] = estatisticas.loc[["mean", "min", "25%", "50%", "75%", "max"]].applymap(formatar_moeda)
+        estatisticas = df["Valor conta"].describe().rename({
+            "count": "Quantidade",
+            "mean": "Média",
+            "std": "Desvio Padrão",
+            "min": "Mínimo",
+            "25%": "1º Quartil",
+            "50%": "Mediana",
+            "75%": "3º Quartil",
+            "max": "Máximo"
+        }).to_frame()
+        estatisticas.loc[["Média", "Mínimo", "1º Quartil", "Mediana", "3º Quartil", "Máximo"]] = estatisticas.loc[["Média", "Mínimo", "1º Quartil", "Mediana", "3º Quartil", "Máximo"]].applymap(formatar_moeda)
         st.dataframe(estatisticas)
 
         st.subheader("Contas com Valores Outliers")
@@ -107,15 +123,15 @@ if uploaded_file:
 
     with st.expander("📁 Análises por Convênio"):
         resumo_convenio = df.groupby("Convênio")["Valor conta"].agg(Quantidade="count", Total="sum", Média="mean").sort_values(by="Total", ascending=False)
-        st.dataframe(resumo_convenio.style.format({"Total": formatar_moeda, "Média": formatar_moeda}))
+        st.dataframe(resumo_convenio.style.format({"Total": formatar_moeda, "Média": formatar_moeda, "Quantidade": "{:.0f}"}))
 
     with st.expander("📂 Análises por Etapa"):
         resumo_etapa = df.groupby("Último Setor destino")["Valor conta"].agg(Quantidade="count", Total="sum", Média="mean").sort_values(by="Total", ascending=False)
-        st.dataframe(resumo_etapa.style.format({"Total": formatar_moeda, "Média": formatar_moeda}))
+        st.dataframe(resumo_etapa.style.format({"Total": formatar_moeda, "Média": formatar_moeda, "Quantidade": "{:.0f}"}))
 
     with st.expander("🩺 Análises por Médico Executor"):
         resumo_medico = df.groupby("Médico executor")["Valor conta"].agg(Quantidade="count", Total="sum", Média="mean").sort_values(by="Total", ascending=False)
-        st.dataframe(resumo_medico.style.format({"Total": formatar_moeda, "Média": formatar_moeda}))
+        st.dataframe(resumo_medico.style.format({"Total": formatar_moeda, "Média": formatar_moeda, "Quantidade": "{:.0f}"}))
 
     with st.expander("📈 Análises Visuais"):
         st.subheader("Boxplot por Convênio")
