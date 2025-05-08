@@ -83,7 +83,19 @@ if uploaded_file:
 
     with st.expander("📊 Análises Gerais"):
         st.subheader("Distribuição Geral das Contas")
-        st.markdown(gerar_insights(df))
+        insights_markdown = gerar_insights(df)
+        st.markdown(insights_markdown)
+
+        # Botão para baixar CSV com os dados brutos dos insights
+        insights_dados = {
+            "Contas com valor zerado": [df[df["Valor conta"] == 0].shape[0]],
+            "Contas com paciente sem alta": [df[df["Status atendimento"].str.lower().str.contains("sem alta", na=False)].shape[0]],
+            "Contas com valor abaixo da mediana": [(df["Valor conta"] < df["Valor conta"].median()).sum()],
+            "Contas com valor acima do limite (outliers)": [df[df["Valor conta"] > df["Valor conta"].quantile(0.75) + 1.5 * (df["Valor conta"].quantile(0.75) - df["Valor conta"].quantile(0.25))].shape[0]],
+            "Contas com mais de 90 dias": [df[df["Data entrada"] < pd.Timestamp.today() - pd.Timedelta(days=90)].shape[0]]
+        }
+        df_insights = pd.DataFrame(insights_dados)
+        st.download_button("📥 Baixar dados analíticos dos insights", data=df_insights.to_csv(index=False).encode('utf-8'), file_name="insights_analiticos.csv", mime="text/csv")
 
         df_mes = df.groupby("AnoMes").agg(Quantidade=("Conta", "nunique"), Total=("Valor conta", "sum")).reset_index()
         fig_dist = px.bar(df_mes, x="AnoMes", y=["Quantidade", "Total"], barmode="group",
