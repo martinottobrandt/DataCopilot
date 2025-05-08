@@ -31,7 +31,7 @@ def gerar_insights(df):
     return f"""
     **Principais insights iniciais:**
     - {zeradas} contas estão com valor zerado, o que pode indicar falha de fechamento, isenção contratual ou erro de sistema.
-    - {sem_alta} contas estão associadas a pacientes sem alta, o que pode impactar o ciclo de faturamento e deve ser monitorado.**
+    - {sem_alta} contas estão associadas a pacientes sem alta, o que pode impactar o ciclo de faturamento e deve ser monitorado.
     - Cerca de {(df["Valor conta"] < df["Valor conta"].median()).mean()*100:.0f}% das contas possuem valor abaixo de R$ {df["Valor conta"].median():,.2f}, sugerindo foco em resolução de volume com baixo impacto financeiro.
     - {outliers.shape[0]} contas estão acima de R$ {limite_superior:,.2f} (outliers), recomendando revisão prioritária e validação de glosas ou auditoria específica.
     - Os convênios {', '.join(resumo_convenio.head(2).index)} concentram {resumo_convenio.head(2)["Valor_Total"].sum() / resumo_convenio["Valor_Total"].sum() * 100:.0f}% do valor total em aberto e devem ser tratados com régua especial de cobrança.
@@ -41,7 +41,6 @@ def gerar_insights(df):
 st.set_page_config(layout="wide")
 st.title("Análise de Contas Pendentes - Hospital")
 
-# Upload do arquivo
 uploaded_file = st.file_uploader("Faça upload da planilha Excel (.xlsx)", type=["xlsx"])
 
 if uploaded_file:
@@ -49,7 +48,6 @@ if uploaded_file:
     primeira_aba = xls.sheet_names[0]
     df = pd.read_excel(xls, sheet_name=primeira_aba)
 
-    # Seleção das colunas relevantes
     colunas = [
         "Status", "Tipo atendimento", "Conta", "Atendimento", "Status atendimento",
         "Convênio", "Categoria", "Valor conta", "Etapa anterior",
@@ -61,28 +59,20 @@ if uploaded_file:
     df["Data entrada"] = pd.to_datetime(df["Data entrada"], errors="coerce")
     df["AnoMes"] = df["Data entrada"].dt.to_period("M").astype(str)
 
-    # Filtros gerais de Convênio e Médico
+    # Filtros
     st.sidebar.header("Filtros Gerais")
-
     convenios_disponiveis = sorted(df["Convênio"].dropna().unique())
     todos_conv = st.sidebar.checkbox("Selecionar todos os convênios", value=True)
-    if todos_conv:
-        convenios_filtrados = convenios_disponiveis
-    else:
-        convenios_filtrados = st.sidebar.multiselect("Convênios:", options=convenios_disponiveis, default=[])
+    convenios_filtrados = convenios_disponiveis if todos_conv else st.sidebar.multiselect("Convênios:", convenios_disponiveis)
 
     medicos_disponiveis = sorted(df["Médico executor"].dropna().unique())
     todos_med = st.sidebar.checkbox("Selecionar todos os médicos", value=True)
-    if todos_med:
-        medicos_filtrados = medicos_disponiveis
-    else:
-        medicos_filtrados = st.sidebar.multiselect("Médicos:", options=medicos_disponiveis, default=[])
+    medicos_filtrados = medicos_disponiveis if todos_med else st.sidebar.multiselect("Médicos:", medicos_disponiveis)
 
     df = df[df["Convênio"].isin(convenios_filtrados)]
     df = df[df["Médico executor"].isin(medicos_filtrados)]
 
     with st.expander("📊 Análises Gerais"):
-        st.subheader("Distribuição Geral das Contas")
         zeradas_df = df[df["Valor conta"] == 0]
         sem_alta_df = df[df[df.columns[df.columns.str.lower().str.contains("alta")][0]].isna()] if any(df.columns.str.lower().str.contains("alta")) else df.iloc[0:0]
         abaixo_mediana_df = df[df["Valor conta"] < df["Valor conta"].median()]
@@ -91,10 +81,7 @@ if uploaded_file:
         outliers_df = df[df["Valor conta"] > limite_superior]
         antigas_df = df[df["Data entrada"] < pd.Timestamp.today() - pd.Timedelta(days=90)]
 
-        st.markdown("**Principais insights iniciais:**")
-
         from io import BytesIO
-
         def gerar_excel_bytes(df, nome_aba):
             buffer = BytesIO()
             with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
@@ -109,24 +96,15 @@ if uploaded_file:
         output_abaixo = gerar_excel_bytes(abaixo_mediana_df, "Abaixo Mediana")
 
         insights = [
-            } contas são outliers (acima de {formatar_moeda(limite_superior)}).", output_outliers, "contas_outliers.xlsx", "outliers"),
+            (f"{outliers_df.shape[0]} contas são outliers (acima de {formatar_moeda(limite_superior)}).", output_outliers, "contas_outliers.xlsx", "outliers"),
             (f"{antigas_df.shape[0]} contas com mais de 90 dias desde a entrada.", output_antigas, "contas_90_dias.xlsx", "antigas"),
-            (f"{zeradas_df.shape[0]} contas estão com valor zerado.", output_zeradas, "contas_zeradas.xlsx", "zeradas"),
-            (f"{sem_alta_df.shape[0]} contas estão com pacientes sem alta.", output_sem_alta, "contas_sem_alta.xlsx", "sem_alta"),
-            (f"{negativos_df.shape[0]} contas possuem valor negativo.", output_negativos, "contas_valor_negativo.xlsx", "negativos"),
-            (f"{abaixo_mediana_df.shape[0]} contas estão abaixo da mediana ({formatar_moeda(df['Valor conta'].median())}).", output_abaixo, "contas_abaixo_mediana.xlsx", "abaixo_mediana")
-        ]} contas com mais de 90 dias desde a entrada.", output_antigas, "contas_90_dias.xlsx", "antigas"),
-            (f"{zeradas_df.shape[0]} contas estão com valor zerado.", output_zeradas, "contas_zeradas.xlsx", "zeradas"),
-            (f"{sem_alta_df.shape[0]} contas estão com pacientes sem alta.", output_sem_alta, "contas_sem_alta.xlsx", "sem_alta"),
-            (f"{negativos_df.shape[0]} contas possuem valor negativo.", output_negativos, "contas_valor_negativo.xlsx", "negativos"),
-            (f"{abaixo_mediana_df.shape[0]} contas estão abaixo da mediana ({formatar_moeda(df['Valor conta'].median())}).", output_abaixo, "contas_abaixo_mediana.xlsx", "abaixo_mediana")
-        ]} contas com mais de 90 dias desde a entrada.", output_antigas, "contas_90_dias.xlsx", "antigas"),
             (f"{zeradas_df.shape[0]} contas estão com valor zerado.", output_zeradas, "contas_zeradas.xlsx", "zeradas"),
             (f"{sem_alta_df.shape[0]} contas estão com pacientes sem alta.", output_sem_alta, "contas_sem_alta.xlsx", "sem_alta"),
             (f"{negativos_df.shape[0]} contas possuem valor negativo.", output_negativos, "contas_valor_negativo.xlsx", "negativos"),
             (f"{abaixo_mediana_df.shape[0]} contas estão abaixo da mediana ({formatar_moeda(df['Valor conta'].median())}).", output_abaixo, "contas_abaixo_mediana.xlsx", "abaixo_mediana")
         ]
 
+        st.markdown("**Principais insights iniciais:**")
         for texto, arquivo, nome_arquivo, chave in insights:
             col1, col2 = st.columns([0.9, 0.1])
             with col1:
@@ -173,5 +151,4 @@ if uploaded_file:
                 value=sankey_df["valor"]
             )
         ))
-        st.plotly_chart(fig_sankey, use_container_width=True), file_name=nome_arquivo, mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", key=chave)
-            (f"{outliers_df.shape[0
+        st.plotly_chart(fig_sankey, use_container_width=True)
