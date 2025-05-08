@@ -98,7 +98,7 @@ if uploaded_file:
         with col2:
             from io import BytesIO
         output_zeradas = BytesIO()
-        with pd.ExcelWriter(output_zeradas, engine='xlsxwriter') as writer:
+        with pd.ExcelWriter(output_zeradas, engine='openpyxl') as writer:
             zeradas_df.to_excel(writer, index=False, sheet_name="Zeradas")
         st.download_button(label="⬇️", data=output_zeradas.getvalue(), file_name="contas_zeradas.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", key="zeradas")
 
