@@ -697,7 +697,7 @@ with tab5:  # Ensure consistent indentation
             ["Boxplot por Convênio", "TreeMap de Valor por Convênio", "Distribuição de Valores", "Mapa de Calor por Mês/Dia"]
         )
             
-    if viz_type == "Boxplot por Convênio":
+        if viz_type == "Boxplot por Convênio":
                 st.markdown("#### Boxplot por Convênio")
                 
                 # Filtrar para mostrar apenas os top 10 convênios
