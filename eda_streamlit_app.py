@@ -37,11 +37,11 @@ if uploaded_file:
     df = df[df["Convênio"].isin(convenios_filtrados)]
 
     st.subheader("Estatísticas Descritivas Gerais")
-    st.dataframe(df["Valor conta"].describe().to_frame().style.format({"Valor conta": formatar_moeda}))
+    st.dataframe(df["Valor conta"].describe().rename({"count": "Quantidade"}).to_frame().style.format({"Valor conta": formatar_moeda}))
 
     st.subheader("Resumo por Convênio")
     resumo_convenio = df.groupby("Convênio")["Valor conta"].agg(
-        Total_Contas="count",
+        Quantidade="count",
         Valor_Total="sum",
         Valor_Médio="mean",
         Valor_Máximo="max"
@@ -52,15 +52,15 @@ if uploaded_file:
         "Valor_Máximo": formatar_moeda
     }))
 
-    st.subheader("Análise de Contas por Mês e Convênio")
+    
     qtd_contas = pd.pivot_table(df, index="Convênio", columns="AnoMes", values="Conta", aggfunc=pd.Series.nunique, fill_value=0)
     valor_total = pd.pivot_table(df, index="Convênio", columns="AnoMes", values="Valor conta", aggfunc="sum", fill_value=0)
 
     st.markdown("### Quantidade de Contas Distintas por Mês")
-    st.dataframe(qtd_contas)
+    st.dataframe(qtd_contas.style.format(na_rep='').set_caption("Quantidade de Contas Distintas por Mês"))
 
     st.markdown("### Valor Total das Contas por Mês")
-    st.dataframe(valor_total.style.format(formatar_moeda))
+    st.dataframe(valor_total.style.format(formatar_moeda).set_caption("Valor Total das Contas por Mês"))
 
     st.subheader("Resumo por Etapa (Último Setor Destino)")
     resumo_etapa = df.groupby("Último Setor destino")["Valor conta"].agg(
@@ -73,13 +73,14 @@ if uploaded_file:
         "Valor_Médio": formatar_moeda
     }))
 
-    st.subheader("Contas com Valores Outliers")
+    st.subheader("Contas com Valores Outliers (mais antigas e de maior valor)")
     q1 = df["Valor conta"].quantile(0.25)
     q3 = df["Valor conta"].quantile(0.75)
     iqr = q3 - q1
     limite_superior = q3 + 1.5 * iqr
     outliers = df[df["Valor conta"] > limite_superior]
-    st.dataframe(outliers.style.format({"Valor conta": formatar_moeda}))
+    outliers_ordenadas = outliers.sort_values(by=["Valor conta", "Data entrada"], ascending=[False, True])
+st.dataframe(outliers_ordenadas[["Data entrada"] + [col for col in outliers_ordenadas.columns if col != "Data entrada"]].style.format({"Valor conta": formatar_moeda}))
 
     st.subheader("Boxplot de Valores por Convênio")
     plt.figure(figsize=(10, 5))
