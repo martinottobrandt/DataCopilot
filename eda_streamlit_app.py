@@ -83,8 +83,44 @@ if uploaded_file:
 
     with st.expander("📊 Análises Gerais"):
         st.subheader("Distribuição Geral das Contas")
-        insights_markdown = gerar_insights(df)
-        st.markdown(insights_markdown)
+        zeradas_df = df[df["Valor conta"] == 0]
+        sem_alta_df = df[df["Status atendimento"].str.lower().str.contains("sem alta", na=False)]
+        abaixo_mediana_df = df[df["Valor conta"] < df["Valor conta"].median()]
+        limite_superior = df["Valor conta"].quantile(0.75) + 1.5 * (df["Valor conta"].quantile(0.75) - df["Valor conta"].quantile(0.25))
+        outliers_df = df[df["Valor conta"] > limite_superior]
+        antigas_df = df[df["Data entrada"] < pd.Timestamp.today() - pd.Timedelta(days=90)]
+
+        st.markdown("**Principais insights iniciais:**")
+
+        col1, col2 = st.columns([0.85, 0.15])
+        with col1:
+            st.markdown(f"- {zeradas_df.shape[0]} contas estão com valor zerado.")
+        with col2:
+            st.download_button("⬇️", data=zeradas_df.to_csv(index=False).encode('utf-8'), file_name="contas_zeradas.csv", label=" ", key="zeradas")
+
+        col1, col2 = st.columns([0.85, 0.15])
+        with col1:
+            st.markdown(f"- {sem_alta_df.shape[0]} contas estão com pacientes sem alta.")
+        with col2:
+            st.download_button("⬇️", data=sem_alta_df.to_csv(index=False).encode('utf-8'), file_name="contas_sem_alta.csv", label=" ", key="sem_alta")
+
+        col1, col2 = st.columns([0.85, 0.15])
+        with col1:
+            st.markdown(f"- {abaixo_mediana_df.shape[0]} contas estão abaixo da mediana (R$ {df['Valor conta'].median():,.2f}).")
+        with col2:
+            st.download_button("⬇️", data=abaixo_mediana_df.to_csv(index=False).encode('utf-8'), file_name="contas_abaixo_mediana.csv", label=" ", key="abaixo_mediana")
+
+        col1, col2 = st.columns([0.85, 0.15])
+        with col1:
+            st.markdown(f"- {outliers_df.shape[0]} contas são outliers (acima de R$ {limite_superior:,.2f}).")
+        with col2:
+            st.download_button("⬇️", data=outliers_df.to_csv(index=False).encode('utf-8'), file_name="contas_outliers.csv", label=" ", key="outliers")
+
+        col1, col2 = st.columns([0.85, 0.15])
+        with col1:
+            st.markdown(f"- {antigas_df.shape[0]} contas com mais de 90 dias desde a entrada.")
+        with col2:
+            st.download_button("⬇️", data=antigas_df.to_csv(index=False).encode('utf-8'), file_name="contas_90_dias.csv", label=" ", key="antigas")
 
         # Botão para baixar CSV com os dados brutos dos insights
         insights_dados = {
