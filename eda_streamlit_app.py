@@ -84,7 +84,7 @@ if uploaded_file:
     with st.expander("📊 Análises Gerais"):
         st.subheader("Distribuição Geral das Contas")
         zeradas_df = df[df["Valor conta"] == 0]
-        sem_alta_df = df[df.columns[df.columns.str.lower().str.contains("alta")][0]].isna() if any(df.columns.str.lower().str.contains("alta")) else df.iloc[0:0]
+        sem_alta_df = df[df[df.columns[df.columns.str.lower().str.contains("alta")][0]].isna()] if any(df.columns.str.lower().str.contains("alta")) else df.iloc[0:0]
         abaixo_mediana_df = df[df["Valor conta"] < df["Valor conta"].median()]
         negativos_df = df[df["Valor conta"] < 0]
         limite_superior = df["Valor conta"].quantile(0.75) + 1.5 * (df["Valor conta"].quantile(0.75) - df["Valor conta"].quantile(0.25))
@@ -99,7 +99,7 @@ if uploaded_file:
             (f"{zeradas_df.shape[0]} contas estão com valor zerado.", output_zeradas, "contas_zeradas.xlsx", "zeradas"),
             (f"{sem_alta_df.shape[0]} contas estão com pacientes sem alta.", output_sem_alta, "contas_sem_alta.xlsx", "sem_alta"),
             (f"{negativos_df.shape[0]} contas possuem valor negativo.", output_negativos, "contas_valor_negativo.xlsx", "negativos"),
-            (f"{abaixo_mediana_df.shape[0]} contas estão abaixo da mediana ({formatar_moeda(df['Valor conta'].median())}).", output_abaixo, "contas_abaixo_mediana.xlsx", "abaixo_mediana".xlsx", "abaixo_mediana"),
+            (f"{abaixo_mediana_df.shape[0]} contas estão abaixo da mediana ({formatar_moeda(df['Valor conta'].median())}).", output_abaixo, "contas_abaixo_mediana.xlsx", "abaixo_mediana"),
         ]
 
         for texto, arquivo, nome_arquivo, chave in insights:
