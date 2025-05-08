@@ -774,7 +774,7 @@ with tab5:  # Ensure consistent indentation
                 indicando poucas contas com valores muito altos e muitas contas com valores menores.
                 """)
             
-            elif viz_type == "Mapa de Calor por Mês/Dia":
+        elif viz_type == "Mapa de Calor por Mês/Dia":
                 st.markdown("#### Mapa de Calor por Mês/Dia")
                 
                 # Extrair mês e dia da semana
@@ -1018,94 +1018,94 @@ with tab5:  # Ensure consistent indentation
             else:
                 st.info("Não foram encontradas contas com mais de 90 dias pendentes.")
         
-        # Adicionar botão para exportar análise completa
-        st.markdown("### 📊 Exportar Análise Completa")
-        
-        if st.button("Gerar Relatório Completo"):
-            from io import BytesIO
-            
-            # Criar buffer para o Excel
-            buffer = BytesIO()
-            
-            with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
-                # Resumo geral
-                pd.DataFrame([kpis_filtrados]).to_excel(writer, sheet_name="Resumo Geral", index=False)
+                # Adicionar botão para exportar análise completa
+                st.markdown("### 📊 Exportar Análise Completa")
                 
-                # Análise por convênio
-                resumo_convenio.reset_index().to_excel(writer, sheet_name="Análise por Convênio", index=False)
-                
-                # Análise por setor
-                resumo_etapa.reset_index().to_excel(writer, sheet_name="Análise por Setor", index=False)
-                
-                # Análise por médico
-                resumo_medico.reset_index().to_excel(writer, sheet_name="Análise por Médico", index=False)
-                
-                # Contas com problemas
-                if not zeradas_df.empty:
-                    zeradas_df.to_excel(writer, sheet_name="Contas Zeradas", index=False)
-                
-                if not outliers_df.empty:
-                    outliers_df.to_excel(writer, sheet_name="Contas Outliers", index=False)
-                
-                if not antigas_df.empty:
-                    antigas_df.to_excel(writer, sheet_name="Contas >90 dias", index=False)
-                
-                # Análise de aging
-                df_filtrado.groupby("Categoria Aging").agg(
-                    Quantidade=("Conta", "count"),
-                    Valor_Total=("Valor conta", "sum")
-                ).reset_index().to_excel(writer, sheet_name="Aging", index=False)
-                
-                # Dados filtrados
-                df_filtrado.to_excel(writer, sheet_name="Dados Completos", index=False)
-            
-            # Oferecer para download
-            st.download_button(
-                label="📥 Baixar Relatório Excel",
-                data=buffer.getvalue(),
-                file_name=f"analise_faturamento_hospital_{datetime.today().strftime('%Y-%m-%d')}.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            )
-            
-            st.success("Relatório gerado com sucesso! Clique no botão acima para baixar.")
-else:
-    st.info("👆 Faça o upload de uma planilha Excel para começar a análise de faturamento hospitalar.")
-    
-    # Mostrar modelo de exemplo
-    st.markdown("""
-    ### 📋 Como usar esta ferramenta
-    
-    1. Faça o upload de uma planilha Excel contendo os dados de contas pendentes do hospital
-    2. A planilha deve conter as seguintes colunas:
-        - Status
-        - Tipo atendimento
-        - Conta
-        - Atendimento
-        - Status atendimento
-        - Convênio
-        - Categoria
-        - Valor conta
-        - Etapa anterior
-        - Último Setor destino
-        - Setor atendimento
-        - Estabelecimento
-        - Data entrada
-        - Médico executor
-    3. Após o upload, utilize os filtros no painel lateral para refinar sua análise
-    4. Explore as diferentes abas para obter insights específicos
-    
-    ### 🔍 Principais recursos
-    
-    - **Dashboard Principal**: Visão geral dos KPIs mais importantes
-    - **Insights**: Análises rápidas com possibilidade de download de planilhas específicas
-    - **Análise por Convênio**: Detalhamento financeiro por convênio
-    - **Análise por Fluxo**: Identificação de gargalos no processo
-    - **Análise por Médico**: Performance financeira por médico
-    - **Visualizações Avançadas**: Gráficos detalhados para análise aprofundada
-    - **Projeções e Tendências**: Análise temporal e sazonalidade
-    - **Eficiência Operacional**: Identificação de gargalos e oportunidades de melhoria
-    
-    ### 📊 Exportação de dados
-    
-    Você pode exportar qualquer análise específica ou gerar um relatório completo em Excel.
-    """)
+                if st.button("Gerar Relatório Completo"):
+                    from io import BytesIO
+                    
+                    # Criar buffer para o Excel
+                    buffer = BytesIO()
+                    
+                    with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
+                        # Resumo geral
+                        pd.DataFrame([kpis_filtrados]).to_excel(writer, sheet_name="Resumo Geral", index=False)
+                        
+                        # Análise por convênio
+                        resumo_convenio.reset_index().to_excel(writer, sheet_name="Análise por Convênio", index=False)
+                        
+                        # Análise por setor
+                        resumo_etapa.reset_index().to_excel(writer, sheet_name="Análise por Setor", index=False)
+                        
+                        # Análise por médico
+                        resumo_medico.reset_index().to_excel(writer, sheet_name="Análise por Médico", index=False)
+                        
+                        # Contas com problemas
+                        if not zeradas_df.empty:
+                            zeradas_df.to_excel(writer, sheet_name="Contas Zeradas", index=False)
+                        
+                        if not outliers_df.empty:
+                            outliers_df.to_excel(writer, sheet_name="Contas Outliers", index=False)
+                        
+                        if not antigas_df.empty:
+                            antigas_df.to_excel(writer, sheet_name="Contas >90 dias", index=False)
+                        
+                        # Análise de aging
+                        df_filtrado.groupby("Categoria Aging").agg(
+                            Quantidade=("Conta", "count"),
+                            Valor_Total=("Valor conta", "sum")
+                        ).reset_index().to_excel(writer, sheet_name="Aging", index=False)
+                        
+                        # Dados filtrados
+                        df_filtrado.to_excel(writer, sheet_name="Dados Completos", index=False)
+                    
+                    # Oferecer para download
+                    st.download_button(
+                        label="📥 Baixar Relatório Excel",
+                        data=buffer.getvalue(),
+                        file_name=f"analise_faturamento_hospital_{datetime.today().strftime('%Y-%m-%d')}.xlsx",
+                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                    )
+                    
+                    st.success("Relatório gerado com sucesso! Clique no botão acima para baixar.")
+                else:
+                    st.info("👆 Faça o upload de uma planilha Excel para começar a análise de faturamento hospitalar.")
+                    
+                    # Mostrar modelo de exemplo
+                    st.markdown("""
+                    ### 📋 Como usar esta ferramenta
+                    
+                    1. Faça o upload de uma planilha Excel contendo os dados de contas pendentes do hospital
+                    2. A planilha deve conter as seguintes colunas:
+                        - Status
+                        - Tipo atendimento
+                        - Conta
+                        - Atendimento
+                        - Status atendimento
+                        - Convênio
+                        - Categoria
+                        - Valor conta
+                        - Etapa anterior
+                        - Último Setor destino
+                        - Setor atendimento
+                        - Estabelecimento
+                        - Data entrada
+                        - Médico executor
+                    3. Após o upload, utilize os filtros no painel lateral para refinar sua análise
+                    4. Explore as diferentes abas para obter insights específicos
+                    
+                    ### 🔍 Principais recursos
+                    
+                    - **Dashboard Principal**: Visão geral dos KPIs mais importantes
+                    - **Insights**: Análises rápidas com possibilidade de download de planilhas específicas
+                    - **Análise por Convênio**: Detalhamento financeiro por convênio
+                    - **Análise por Fluxo**: Identificação de gargalos no processo
+                    - **Análise por Médico**: Performance financeira por médico
+                    - **Visualizações Avançadas**: Gráficos detalhados para análise aprofundada
+                    - **Projeções e Tendências**: Análise temporal e sazonalidade
+                    - **Eficiência Operacional**: Identificação de gargalos e oportunidades de melhoria
+                    
+                    ### 📊 Exportação de dados
+                    
+                    Você pode exportar qualquer análise específica ou gerar um relatório completo em Excel.
+                    """)
