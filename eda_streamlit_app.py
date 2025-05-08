@@ -689,7 +689,7 @@ fig_heatmap.update_layout(height=400)
 st.plotly_chart(fig_heatmap, use_container_width=True)
 
         
-with tab5:
+        with tab5:
             st.markdown("### 📊 Visualizações Avançadas")
             
             viz_type = st.selectbox(
