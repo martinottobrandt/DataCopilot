@@ -678,15 +678,16 @@ if uploaded_file:
             # Preencher NaN com zeros
             pivot_med_conv = pivot_med_conv.fillna(0)
             
-            # Criar mapa de calor com Plotly
-         fig_heatmap = px.imshow(
+# Criar mapa de calor com Plotly
+fig_heatmap = px.imshow(
     pivot_med_conv,
     labels=dict(x="Convênio", y="Médico executor", color="Valor Total"),
     text_auto=True  # ou text_auto='.2s' para formato numérico simples
 )
 
-            fig_heatmap.update_layout(height=400)
-            st.plotly_chart(fig_heatmap, use_container_width=True)
+fig_heatmap.update_layout(height=400)
+st.plotly_chart(fig_heatmap, use_container_width=True)
+
         
         with tab5:
             st.markdown("### 📊 Visualizações Avançadas")
