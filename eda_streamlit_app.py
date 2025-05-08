@@ -689,7 +689,7 @@ fig_heatmap.update_layout(height=400)
 st.plotly_chart(fig_heatmap, use_container_width=True)
 
         
-          with tab5:  # Ensure consistent indentation
+with tab5:  # Ensure consistent indentation
         st.markdown("### 📊 Visualizações Avançadas")
         
         viz_type = st.selectbox(
