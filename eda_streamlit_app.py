@@ -72,14 +72,14 @@ if uploaded_file:
         "Valor_Médio": formatar_moeda
     }))
 
-    st.subheader("Contas com Valores Outliers (mais antigas e de maior valor)")
+    st.subheader("Contas com Valores Outliers")
     q1 = df["Valor conta"].quantile(0.25)
     q3 = df["Valor conta"].quantile(0.75)
     iqr = q3 - q1
     limite_superior = q3 + 1.5 * iqr
     outliers = df[df["Valor conta"] > limite_superior]
     outliers["Data entrada"] = outliers["Data entrada"].dt.strftime('%d/%m/%Y')
-    outliers_ordenadas = outliers.sort_values(by=["Valor conta", "Data entrada"], ascending=[False, True])
+    outliers_ordenadas = outliers.sort_values(by="Valor conta", ascending=False)
     colunas_outliers = ["Status", "Data entrada", "Valor conta"] + [col for col in outliers_ordenadas.columns if col not in ["Status", "Data entrada", "Valor conta"]]
     st.dataframe(outliers_ordenadas[colunas_outliers].style.format({"Valor conta": formatar_moeda}))
 
