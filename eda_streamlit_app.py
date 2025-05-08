@@ -52,11 +52,20 @@ if uploaded_file:
     df = df[df["Médico executor"].isin(medicos_filtrados)]
 
     with st.expander("📊 Análises Gerais"):
-        st.subheader("Distribuição Geral das Contas")
+                st.subheader("Distribuição Geral das Contas")
+        st.markdown("""
+        **Principais insights iniciais:**
+        - A maior parte das contas está concentrada abaixo da mediana, com poucos outliers de valor elevado.
+        - Há concentração de volume em convênios específicos que merecem atenção para priorização de cobrança.
+        - Identificadas contas antigas ainda não resolvidas, recomendando priorização por faixa de tempo.
+        - Contas com valores muito altos devem ser auditadas antes da cobrança.
+        """)
         fig_dist = px.histogram(df, x="Valor conta", nbins=50, title="Distribuição dos Valores das Contas")
         st.plotly_chart(fig_dist, use_container_width=True)
         st.subheader("Estatísticas Descritivas Gerais")
-        st.dataframe(df["Valor conta"].describe().rename({"count": "Quantidade"}).to_frame().style.format({"Valor conta": formatar_moeda}))
+        estatisticas = df["Valor conta"].describe().rename({"count": "Quantidade"}).to_frame()
+        estatisticas.loc[["mean", "min", "25%", "50%", "75%", "max"]] = estatisticas.loc[["mean", "min", "25%", "50%", "75%", "max"]].applymap(formatar_moeda)
+        st.dataframe(estatisticas)
 
         st.subheader("Contas com Valores Outliers")
         q1 = df["Valor conta"].quantile(0.25)
@@ -96,20 +105,16 @@ if uploaded_file:
         st.markdown("### Quantidade de Contas Distintas por Mês")
         st.dataframe(qtd_contas.style.set_caption("Quantidade de Contas Distintas por Mês"))
 
-        st.markdown("### Valor Total das Contas por Mês")
-        st.dataframe(valor_total.style.format(formatar_moeda).set_caption("Valor Total das Contas por Mês"))
+                st.markdown("### Valor Total das Contas por Mês")
+                st.dataframe(valor_total.style.format(formatar_moeda).set_caption("Valor Total das Contas por Mês"))
 
-        st.subheader("Boxplot de Valores por Convênio")
-        plt.figure(figsize=(10, 5))
-        sns.boxplot(data=df, x="Convênio", y="Valor conta")
-        plt.xticks(rotation=90)
-        st.pyplot(plt)
+        
 
-        st.subheader("TreeMap de Valor Total por Convênio")
-        df_treemap = df.groupby("Convênio")["Valor conta"].sum().reset_index()
-        fig_tree = px.treemap(df_treemap, path=["Convênio"], values="Valor conta",
-                              title="Distribuição do Valor Total das Contas por Convênio")
-        st.plotly_chart(fig_tree, use_container_width=True)
+        )
+
+        
+
+        
 
     with st.expander("📂 Informações por Etapa"):
         resumo_etapa = df.groupby("Último Setor destino")["Valor conta"].agg(
@@ -124,7 +129,20 @@ if uploaded_file:
             "Valor_Médio": formatar_moeda
         }))
 
-    with st.expander("📈 Fluxo das Contas"):
+    with st.expander("📊 Gráficos"):
+        st.subheader("Boxplot de Valores por Convênio")
+        plt.figure(figsize=(10, 5))
+        sns.boxplot(data=df, x="Convênio", y="Valor conta")
+        plt.xticks(rotation=90)
+        st.pyplot(plt)
+
+        st.subheader("TreeMap de Valor Total por Convênio")
+        df_treemap = df.groupby("Convênio")["Valor conta"].sum().reset_index()
+        fig_tree = px.treemap(df_treemap, path=["Convênio"], values="Valor conta",
+                              title="Distribuição do Valor Total das Contas por Convênio")
+        st.plotly_chart(fig_tree, use_container_width=True)
+
+        st.subheader("Fluxo Sankey: Status → Convênio")
         st.subheader("Fluxo Sankey: Status → Convênio")
         origem_sankey = df["Status"].fillna("Desconhecido")
         destino_sankey = df["Convênio"].fillna("Desconhecido")
