@@ -17,7 +17,9 @@ st.title("Análise de Contas Pendentes - Hospital")
 uploaded_file = st.file_uploader("Faça upload da planilha Excel (.xlsx)", type=["xlsx"])
 
 if uploaded_file:
-    df = pd.read_excel(uploaded_file, sheet_name="Planilha1")
+    xls = pd.ExcelFile(uploaded_file)
+    primeira_aba = xls.sheet_names[0]
+    df = pd.read_excel(xls, sheet_name=primeira_aba)
 
     # Seleção das colunas relevantes
     colunas = [
