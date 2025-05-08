@@ -26,7 +26,7 @@ def gerar_insights(df):
     contas_90_dias = df[df["Data entrada"] < pd.Timestamp.today() - pd.Timedelta(days=90)]
 
     zeradas = df[df["Valor conta"] == 0].shape[0]
-    sem_alta = df[df["Status atendimento"].str.lower().str.contains("sem alta", na=False)].shape[0]
+    sem_alta = df[df["Data alta"].isna()].shape[0]
 
     return f"""
     **Principais insights iniciais:**
@@ -84,7 +84,7 @@ if uploaded_file:
     with st.expander("📊 Análises Gerais"):
         st.subheader("Distribuição Geral das Contas")
         zeradas_df = df[df["Valor conta"] == 0]
-        sem_alta_df = df[df["Status atendimento"].str.lower().str.contains("sem alta", na=False)]
+        sem_alta_df = df[df["Data alta"].isna()]
         abaixo_mediana_df = df[df["Valor conta"] < df["Valor conta"].median()]
         limite_superior = df["Valor conta"].quantile(0.75) + 1.5 * (df["Valor conta"].quantile(0.75) - df["Valor conta"].quantile(0.25))
         outliers_df = df[df["Valor conta"] > limite_superior]
@@ -92,56 +92,25 @@ if uploaded_file:
 
         st.markdown("**Principais insights iniciais:**")
 
-        col1, col2 = st.columns([0.85, 0.15])
-        with col1:
-            st.markdown(f"- {zeradas_df.shape[0]} contas estão com valor zerado.")
-        with col2:
-            from io import BytesIO
-        output_zeradas = BytesIO()
-        with pd.ExcelWriter(output_zeradas, engine='openpyxl') as writer:
-            zeradas_df.to_excel(writer, index=False, sheet_name="Zeradas")
-        st.download_button(label="⬇️", data=output_zeradas.getvalue(), file_name="contas_zeradas.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", key="zeradas")
+        insights = [
+            (f"{outliers_df.shape[0]} contas são outliers (acima de {formatar_moeda(limite_superior)}).", output_outliers, "contas_outliers.xlsx", "outliers"),
+            (f"{antigas_df.shape[0]} contas com mais de 90 dias desde a entrada.", output_antigas, "contas_90_dias.xlsx", "antigas"),
+            (f"{zeradas_df.shape[0]} contas estão com valor zerado.", output_zeradas, "contas_zeradas.xlsx", "zeradas"),
+            (f"{sem_alta_df.shape[0]} contas estão com pacientes sem alta.", output_sem_alta, "contas_sem_alta.xlsx", "sem_alta"),
+            (f"{abaixo_mediana_df.shape[0]} contas estão abaixo da mediana ({formatar_moeda(df['Valor conta'].median())}).", output_abaixo, "contas_abaixo_mediana.xlsx", "abaixo_mediana"),
+        ]
 
-        col1, col2 = st.columns([0.85, 0.15])
-        with col1:
-            st.markdown(f"- {sem_alta_df.shape[0]} contas estão com pacientes sem alta.")
-        with col2:
-            output_sem_alta = BytesIO()
-        with pd.ExcelWriter(output_sem_alta, engine='openpyxl') as writer:
-            sem_alta_df.to_excel(writer, index=False, sheet_name="Sem Alta")
-        st.download_button(label="⬇️", data=output_sem_alta.getvalue(), file_name="contas_sem_alta.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", key="sem_alta")
-
-        col1, col2 = st.columns([0.85, 0.15])
-        with col1:
-            st.markdown(f"- {abaixo_mediana_df.shape[0]} contas estão abaixo da mediana (R$ {df['Valor conta'].median():,.2f}).")
-        with col2:
-            output_abaixo = BytesIO()
-        with pd.ExcelWriter(output_abaixo, engine='openpyxl') as writer:
-            abaixo_mediana_df.to_excel(writer, index=False, sheet_name="Abaixo Mediana")
-        st.download_button(label="⬇️", data=output_abaixo.getvalue(), file_name="contas_abaixo_mediana.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", key="abaixo_mediana")
-
-        col1, col2 = st.columns([0.85, 0.15])
-        with col1:
-            st.markdown(f"- {outliers_df.shape[0]} contas são outliers (acima de R$ {limite_superior:,.2f}).")
-        with col2:
-            output_outliers = BytesIO()
-        with pd.ExcelWriter(output_outliers, engine='openpyxl') as writer:
-            outliers_df.to_excel(writer, index=False, sheet_name="Outliers")
-        st.download_button(label="⬇️", data=output_outliers.getvalue(), file_name="contas_outliers.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", key="outliers")
-
-        col1, col2 = st.columns([0.85, 0.15])
-        with col1:
-            st.markdown(f"- {antigas_df.shape[0]} contas com mais de 90 dias desde a entrada.")
-        with col2:
-            output_antigas = BytesIO()
-        with pd.ExcelWriter(output_antigas, engine='openpyxl') as writer:
-            antigas_df.to_excel(writer, index=False, sheet_name="90+ Dias")
-        st.download_button(label="⬇️", data=output_antigas.getvalue(), file_name="contas_90_dias.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", key="antigas")
+        for texto, arquivo, nome_arquivo, chave in insights:
+            col1, col2 = st.columns([0.9, 0.1])
+            with col1:
+                st.markdown(f"- {texto}")
+            with col2:
+                st.download_button(label="⬇️", data=arquivo.getvalue(), file_name=nome_arquivo, mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", key=chave)
 
         # Botão para baixar CSV com os dados brutos dos insights
         insights_dados = {
             "Contas com valor zerado": [df[df["Valor conta"] == 0].shape[0]],
-            "Contas com paciente sem alta": [df[df["Status atendimento"].str.lower().str.contains("sem alta", na=False)].shape[0]],
+            "Contas com paciente sem alta": [df[df["Data alta"].isna()].shape[0]],
             "Contas com valor abaixo da mediana": [(df["Valor conta"] < df["Valor conta"].median()).sum()],
             "Contas com valor acima do limite (outliers)": [df[df["Valor conta"] > df["Valor conta"].quantile(0.75) + 1.5 * (df["Valor conta"].quantile(0.75) - df["Valor conta"].quantile(0.25))].shape[0]],
             "Contas com mais de 90 dias": [df[df["Data entrada"] < pd.Timestamp.today() - pd.Timedelta(days=90)].shape[0]]
