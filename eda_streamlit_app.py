@@ -33,7 +33,12 @@ if uploaded_file:
 
     # Filtro por convênio no cabeçalho
     convenios_disponiveis = sorted(df["Convênio"].dropna().unique())
-    convenios_filtrados = st.multiselect("Filtrar por Convênio:", options=convenios_disponiveis, default=convenios_disponiveis)
+    with st.expander("🔎 Filtrar Convênios"):
+        todos_convenios = st.checkbox("Selecionar todos", value=True, key="conv_todos")
+        if todos_convenios:
+            convenios_filtrados = convenios_disponiveis
+        else:
+            convenios_filtrados = st.multiselect("Convênios:", options=convenios_disponiveis, default=[])
     df = df[df["Convênio"].isin(convenios_filtrados)]
 
     st.subheader("Estatísticas Descritivas Gerais")
@@ -126,7 +131,12 @@ if uploaded_file:
 
     st.subheader("Análise de Contas por Médico")
     medicos_disponiveis = sorted(df["Médico executor"].dropna().unique())
-    medicos_filtrados = st.multiselect("Filtrar por Médico:", options=medicos_disponiveis, default=medicos_disponiveis)
+    with st.expander("👨‍⚕️ Filtrar Médicos"):
+        todos_medicos = st.checkbox("Selecionar todos", value=True, key="med_todos")
+        if todos_medicos:
+            medicos_filtrados = medicos_disponiveis
+        else:
+            medicos_filtrados = st.multiselect("Médicos:", options=medicos_disponiveis, default=[])
     df_medico = df[df["Médico executor"].isin(medicos_filtrados)]
 
     if not df_medico.empty:
