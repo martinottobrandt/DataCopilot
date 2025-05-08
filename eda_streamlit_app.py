@@ -81,7 +81,13 @@ if uploaded_file:
     outliers["Data entrada"] = outliers["Data entrada"].dt.strftime('%d/%m/%Y')
     outliers_ordenadas = outliers.sort_values(by="Valor conta", ascending=False)
     colunas_outliers = ["Status", "Data entrada", "Valor conta"] + [col for col in outliers_ordenadas.columns if col not in ["Status", "Data entrada", "Valor conta"]]
-    st.dataframe(outliers_ordenadas[colunas_outliers].style.format({"Valor conta": formatar_moeda}))
+        st.dataframe(outliers_ordenadas[colunas_outliers].style.format({"Valor conta": formatar_moeda}))
+
+    st.subheader("Contas Mais Antigas")
+    contas_antigas = df.sort_values(by="Data entrada", ascending=True).head(20)
+    contas_antigas["Data entrada"] = contas_antigas["Data entrada"].dt.strftime('%d/%m/%Y')
+    colunas_antigas = ["Status", "Data entrada", "Valor conta"] + [col for col in contas_antigas.columns if col not in ["Status", "Data entrada", "Valor conta"]]
+    st.dataframe(contas_antigas[colunas_antigas].style.format({"Valor conta": formatar_moeda}))
 
     st.subheader("Boxplot de Valores por Convênio")
     plt.figure(figsize=(10, 5))
@@ -120,10 +126,25 @@ if uploaded_file:
 
 
     st.subheader("Análise de Contas por Médico")
-    if "Atendimento" in df.columns and "Data entrada" in df.columns:
-        df["Data entrada"] = pd.to_datetime(df["Data entrada"], errors="coerce")
-        df["Mês"] = df["Data entrada"].dt.to_period("M").astype(str)
-        with st.expander("Contas por Médico e por Mês", expanded=False):
+    medicos_disponiveis = sorted(df["Atendimento"].dropna().unique())
+    medicos_filtrados = st.multiselect("Filtrar por Médico:", options=medicos_disponiveis, default=medicos_disponiveis)
+    df_medico = df[df["Atendimento"].isin(medicos_filtrados)]
+
+    if not df_medico.empty:
+        df_medico["Mês"] = df_medico["Data entrada"].dt.to_period("M").astype(str)
+        medico_agg = df_medico.groupby("Atendimento").agg(
+            Quantidade_Cirurgias=("Conta", "nunique"),
+            Valor_Total=("Valor conta", "sum")
+        ).sort_values(by="Valor_Total", ascending=False)
+        st.dataframe(medico_agg.style.format({"Valor_Total": formatar_moeda}))
+
+        st.markdown("### Contas por Médico e por Mês")
+        medico_mes = df_medico.groupby(["Atendimento", "Mês"]).agg(
+            Quantidade=("Conta", "nunique"),
+            Valor_Total=("Valor conta", "sum")
+        ).reset_index()
+        tabela_medico_mes = medico_mes.pivot(index="Atendimento", columns="Mês", values="Quantidade").fillna(0)
+        st.dataframe(tabela_medico_mes)
             grupo_medico = df.groupby(["Atendimento", "Mês"]).agg(
                 Quantidade=("Conta", "nunique"),
                 Valor_Total=("Valor conta", "sum")
