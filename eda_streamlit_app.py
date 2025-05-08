@@ -96,31 +96,31 @@ if uploaded_file:
         with col1:
             st.markdown(f"- {zeradas_df.shape[0]} contas estão com valor zerado.")
         with col2:
-            st.download_button("⬇️", data=zeradas_df.to_csv(index=False).encode('utf-8'), file_name="contas_zeradas.csv", label=" ", key="zeradas")
+            st.download_button(label="⬇️", data=zeradas_df.to_csv(index=False).encode('utf-8'), file_name="contas_zeradas.csv", key="zeradas")
 
         col1, col2 = st.columns([0.85, 0.15])
         with col1:
             st.markdown(f"- {sem_alta_df.shape[0]} contas estão com pacientes sem alta.")
         with col2:
-            st.download_button("⬇️", data=sem_alta_df.to_csv(index=False).encode('utf-8'), file_name="contas_sem_alta.csv", label=" ", key="sem_alta")
+            st.download_button(label="⬇️", data=sem_alta_df.to_csv(index=False).encode('utf-8'), file_name="contas_sem_alta.csv", key="sem_alta")
 
         col1, col2 = st.columns([0.85, 0.15])
         with col1:
             st.markdown(f"- {abaixo_mediana_df.shape[0]} contas estão abaixo da mediana (R$ {df['Valor conta'].median():,.2f}).")
         with col2:
-            st.download_button("⬇️", data=abaixo_mediana_df.to_csv(index=False).encode('utf-8'), file_name="contas_abaixo_mediana.csv", label=" ", key="abaixo_mediana")
+            st.download_button(label="⬇️", data=abaixo_mediana_df.to_csv(index=False).encode('utf-8'), file_name="contas_abaixo_mediana.csv", key="abaixo_mediana")
 
         col1, col2 = st.columns([0.85, 0.15])
         with col1:
             st.markdown(f"- {outliers_df.shape[0]} contas são outliers (acima de R$ {limite_superior:,.2f}).")
         with col2:
-            st.download_button("⬇️", data=outliers_df.to_csv(index=False).encode('utf-8'), file_name="contas_outliers.csv", label=" ", key="outliers")
+            st.download_button(label="⬇️", data=outliers_df.to_csv(index=False).encode('utf-8'), file_name="contas_outliers.csv", key="outliers")
 
         col1, col2 = st.columns([0.85, 0.15])
         with col1:
             st.markdown(f"- {antigas_df.shape[0]} contas com mais de 90 dias desde a entrada.")
         with col2:
-            st.download_button("⬇️", data=antigas_df.to_csv(index=False).encode('utf-8'), file_name="contas_90_dias.csv", label=" ", key="antigas")
+            st.download_button(label="⬇️", data=antigas_df.to_csv(index=False).encode('utf-8'), file_name="contas_90_dias.csv", key="antigas")
 
         # Botão para baixar CSV com os dados brutos dos insights
         insights_dados = {
