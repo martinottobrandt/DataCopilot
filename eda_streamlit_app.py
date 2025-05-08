@@ -52,7 +52,6 @@ if uploaded_file:
         "Valor_Máximo": formatar_moeda
     }))
 
-    
     qtd_contas = pd.pivot_table(df, index="Convênio", columns="AnoMes", values="Conta", aggfunc=pd.Series.nunique, fill_value=0)
     valor_total = pd.pivot_table(df, index="Convênio", columns="AnoMes", values="Valor conta", aggfunc="sum", fill_value=0)
 
@@ -64,7 +63,7 @@ if uploaded_file:
 
     st.subheader("Resumo por Etapa (Último Setor Destino)")
     resumo_etapa = df.groupby("Último Setor destino")["Valor conta"].agg(
-        Total_Contas="count",
+        Quantidade="count",
         Valor_Total="sum",
         Valor_Médio="mean"
     ).sort_values(by="Valor_Total", ascending=False)
@@ -80,7 +79,7 @@ if uploaded_file:
     limite_superior = q3 + 1.5 * iqr
     outliers = df[df["Valor conta"] > limite_superior]
     outliers_ordenadas = outliers.sort_values(by=["Valor conta", "Data entrada"], ascending=[False, True])
-st.dataframe(outliers_ordenadas[["Data entrada"] + [col for col in outliers_ordenadas.columns if col != "Data entrada"]].style.format({"Valor conta": formatar_moeda}))
+    st.dataframe(outliers_ordenadas[["Data entrada"] + [col for col in outliers_ordenadas.columns if col != "Data entrada"]].style.format({"Valor conta": formatar_moeda}))
 
     st.subheader("Boxplot de Valores por Convênio")
     plt.figure(figsize=(10, 5))
