@@ -26,7 +26,7 @@ def gerar_insights(df):
     contas_90_dias = df[df["Data entrada"] < pd.Timestamp.today() - pd.Timedelta(days=90)]
 
     zeradas = df[df["Valor conta"] == 0].shape[0]
-    sem_alta = df[df["Data alta"].isna()].shape[0]
+    sem_alta = df[df.columns[df.columns.str.lower().str.contains("alta")][0]].isna().sum() if any(df.columns.str.lower().str.contains("alta")) else 0
 
     return f"""
     **Principais insights iniciais:**
@@ -84,8 +84,9 @@ if uploaded_file:
     with st.expander("📊 Análises Gerais"):
         st.subheader("Distribuição Geral das Contas")
         zeradas_df = df[df["Valor conta"] == 0]
-        sem_alta_df = df[df["Data alta"].isna()]
+        sem_alta_df = df[df.columns[df.columns.str.lower().str.contains("alta")][0]].isna() if any(df.columns.str.lower().str.contains("alta")) else df.iloc[0:0]
         abaixo_mediana_df = df[df["Valor conta"] < df["Valor conta"].median()]
+        negativos_df = df[df["Valor conta"] < 0]
         limite_superior = df["Valor conta"].quantile(0.75) + 1.5 * (df["Valor conta"].quantile(0.75) - df["Valor conta"].quantile(0.25))
         outliers_df = df[df["Valor conta"] > limite_superior]
         antigas_df = df[df["Data entrada"] < pd.Timestamp.today() - pd.Timedelta(days=90)]
@@ -97,7 +98,8 @@ if uploaded_file:
             (f"{antigas_df.shape[0]} contas com mais de 90 dias desde a entrada.", output_antigas, "contas_90_dias.xlsx", "antigas"),
             (f"{zeradas_df.shape[0]} contas estão com valor zerado.", output_zeradas, "contas_zeradas.xlsx", "zeradas"),
             (f"{sem_alta_df.shape[0]} contas estão com pacientes sem alta.", output_sem_alta, "contas_sem_alta.xlsx", "sem_alta"),
-            (f"{abaixo_mediana_df.shape[0]} contas estão abaixo da mediana ({formatar_moeda(df['Valor conta'].median())}).", output_abaixo, "contas_abaixo_mediana.xlsx", "abaixo_mediana"),
+            (f"{negativos_df.shape[0]} contas possuem valor negativo.", output_negativos, "contas_valor_negativo.xlsx", "negativos"),
+            (f"{abaixo_mediana_df.shape[0]} contas estão abaixo da mediana ({formatar_moeda(df['Valor conta'].median())}).", output_abaixo, "contas_abaixo_mediana.xlsx", "abaixo_mediana".xlsx", "abaixo_mediana"),
         ]
 
         for texto, arquivo, nome_arquivo, chave in insights:
@@ -110,7 +112,7 @@ if uploaded_file:
         # Botão para baixar CSV com os dados brutos dos insights
         insights_dados = {
             "Contas com valor zerado": [df[df["Valor conta"] == 0].shape[0]],
-            "Contas com paciente sem alta": [df[df["Data alta"].isna()].shape[0]],
+            "Contas com paciente sem alta": [sem_alta],
             "Contas com valor abaixo da mediana": [(df["Valor conta"] < df["Valor conta"].median()).sum()],
             "Contas com valor acima do limite (outliers)": [df[df["Valor conta"] > df["Valor conta"].quantile(0.75) + 1.5 * (df["Valor conta"].quantile(0.75) - df["Valor conta"].quantile(0.25))].shape[0]],
             "Contas com mais de 90 dias": [df[df["Data entrada"] < pd.Timestamp.today() - pd.Timedelta(days=90)].shape[0]]
