@@ -57,11 +57,19 @@ if uploaded_file:
         st.subheader("Distribuição Geral das Contas")
         st.markdown("""
         **Principais insights iniciais:**
-        - A maior parte das contas está concentrada abaixo da mediana, com poucos outliers de valor elevado.
-        - Há concentração de volume em convênios específicos que merecem atenção para priorização de cobrança.
-        - Identificadas contas antigas ainda não resolvidas, recomendando priorização por faixa de tempo.
-        - Contas com valores muito altos devem ser auditadas antes da cobrança.
-        """)
+        - Cerca de {:.0f}% das contas possuem valor abaixo de R$ {:.2f}, sugerindo foco em resolução de volume com baixo impacto financeiro.
+        - {} contas estão acima de R$ {:.2f} (outliers), recomendando revisão prioritária e validação de glosas ou auditoria específica.
+        - Os convênios {} concentram {:.0f}% do valor total em aberto e devem ser tratados com régua especial de cobrança.
+        - Identificamos {} contas com mais de 90 dias desde a entrada, indicando falha de processo de fechamento ou cobrança.
+        """.format(
+            (df["Valor conta"] < df["Valor conta"].median()).mean()*100,
+            df["Valor conta"].median(),
+            outliers.shape[0],
+            df["Valor conta"].quantile(0.75) + 1.5 * (df["Valor conta"].quantile(0.75) - df["Valor conta"].quantile(0.25)),
+            ', '.join(resumo_convenio.head(2).index.tolist()),
+            resumo_convenio.head(2)["Valor_Total"].sum() / resumo_convenio["Valor_Total"].sum() * 100,
+            df[df["Data entrada"] < pd.Timestamp.today() - pd.Timedelta(days=90)].shape[0]
+        ))
         fig_dist = px.histogram(df, x="Valor conta", nbins=50, title="Distribuição dos Valores das Contas")
         st.plotly_chart(fig_dist, use_container_width=True)
 
