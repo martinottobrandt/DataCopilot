@@ -52,7 +52,7 @@ if uploaded_file:
     df = df[df["Médico executor"].isin(medicos_filtrados)]
 
     with st.expander("📊 Análises Gerais"):
-                st.subheader("Distribuição Geral das Contas")
+        st.subheader("Distribuição Geral das Contas")
         st.markdown("""
         **Principais insights iniciais:**
         - A maior parte das contas está concentrada abaixo da mediana, com poucos outliers de valor elevado.
@@ -62,6 +62,7 @@ if uploaded_file:
         """)
         fig_dist = px.histogram(df, x="Valor conta", nbins=50, title="Distribuição dos Valores das Contas")
         st.plotly_chart(fig_dist, use_container_width=True)
+
         st.subheader("Estatísticas Descritivas Gerais")
         estatisticas = df["Valor conta"].describe().rename({"count": "Quantidade"}).to_frame()
         estatisticas.loc[["mean", "min", "25%", "50%", "75%", "max"]] = estatisticas.loc[["mean", "min", "25%", "50%", "75%", "max"]].applymap(formatar_moeda)
@@ -105,16 +106,8 @@ if uploaded_file:
         st.markdown("### Quantidade de Contas Distintas por Mês")
         st.dataframe(qtd_contas.style.set_caption("Quantidade de Contas Distintas por Mês"))
 
-                st.markdown("### Valor Total das Contas por Mês")
-                st.dataframe(valor_total.style.format(formatar_moeda).set_caption("Valor Total das Contas por Mês"))
-
-        
-
-        )
-
-        
-
-        
+        st.markdown("### Valor Total das Contas por Mês")
+        st.dataframe(valor_total.style.format(formatar_moeda).set_caption("Valor Total das Contas por Mês"))
 
     with st.expander("📂 Informações por Etapa"):
         resumo_etapa = df.groupby("Último Setor destino")["Valor conta"].agg(
@@ -143,7 +136,6 @@ if uploaded_file:
         st.plotly_chart(fig_tree, use_container_width=True)
 
         st.subheader("Fluxo Sankey: Status → Convênio")
-        st.subheader("Fluxo Sankey: Status → Convênio")
         origem_sankey = df["Status"].fillna("Desconhecido")
         destino_sankey = df["Convênio"].fillna("Desconhecido")
         todos_nos_sankey = list(pd.unique(origem_sankey.tolist() + destino_sankey.tolist()))
@@ -169,7 +161,6 @@ if uploaded_file:
     with st.expander("🧑‍⚕️ Informações por Médico"):
         st.subheader("Análise de Contas por Médico")
         df_medico = df.copy()
-        df_medico = df[df["Médico executor"].isin(medicos_filtrados)]
 
         if not df_medico.empty:
             df_medico["Mês"] = df_medico["Data entrada"].dt.to_period("M").astype(str)
