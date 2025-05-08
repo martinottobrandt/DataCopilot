@@ -1,4 +1,3 @@
-
 import pandas as pd
 import numpy as np
 import seaborn as sns
@@ -25,7 +24,7 @@ if uploaded_file:
         "Status", "Tipo atendimento", "Conta", "Atendimento", "Status atendimento",
         "Convênio", "Categoria", "Valor conta", "Etapa anterior",
         "Último Setor destino", "Setor atendimento", "Estabelecimento",
-        "Data entrada"
+        "Data entrada", "Médico executor"
     ]
     df = df[colunas].copy()
     df["Valor conta"] = pd.to_numeric(df["Valor conta"], errors="coerce")
@@ -82,7 +81,7 @@ if uploaded_file:
     outliers["Data entrada"] = outliers["Data entrada"].dt.strftime('%d/%m/%Y')
     outliers_ordenadas = outliers.sort_values(by="Valor conta", ascending=False)
     colunas_outliers = ["Status", "Data entrada", "Valor conta"] + [col for col in outliers_ordenadas.columns if col not in ["Status", "Data entrada", "Valor conta"]]
-    st.dataframe(outliers_ordenadas[colunas_outliers].style.format({"Valor conta": formatar_moeda}))
+        st.dataframe(outliers_ordenadas[colunas_outliers].style.format({"Valor conta": formatar_moeda}))
 
     st.subheader("Contas Mais Antigas")
     contas_antigas = df.sort_values(by="Data entrada", ascending=True).head(20)
@@ -125,26 +124,29 @@ if uploaded_file:
     sankey_fig.update_layout(title_text="Fluxo das Contas: Status → Convênio", font_size=10)
     st.plotly_chart(sankey_fig, use_container_width=True)
 
+
     st.subheader("Análise de Contas por Médico")
-    medicos_disponiveis = sorted(df["Atendimento"].dropna().unique())
+    medicos_disponiveis = sorted(df["Médico executor"].dropna().unique())
     medicos_filtrados = st.multiselect("Filtrar por Médico:", options=medicos_disponiveis, default=medicos_disponiveis)
+    df_medico = df[df["Médico executor"].isin(medicos_filtrados)]
     df_medico = df[df["Atendimento"].isin(medicos_filtrados)]
 
     if not df_medico.empty:
         df_medico["Mês"] = df_medico["Data entrada"].dt.to_period("M").astype(str)
-        medico_agg = df_medico.groupby("Atendimento").agg(
+        medico_agg = df_medico.groupby("Médico executor").agg(
             Quantidade_Cirurgias=("Conta", "nunique"),
             Valor_Total=("Valor conta", "sum")
         ).sort_values(by="Valor_Total", ascending=False)
         st.dataframe(medico_agg.style.format({"Valor_Total": formatar_moeda}))
 
         st.markdown("### Contas por Médico e por Mês")
-        medico_mes = df_medico.groupby(["Atendimento", "Mês"]).agg(
+        medico_mes = df_medico.groupby(["Médico executor", "Mês"]).agg(
             Quantidade=("Conta", "nunique"),
             Valor_Total=("Valor conta", "sum")
         ).reset_index()
-        tabela_medico_mes = medico_mes.pivot(index="Atendimento", columns="Mês", values="Quantidade").fillna(0)
+        tabela_medico_mes = medico_mes.pivot(index="Médico executor", columns="Mês", values="Quantidade").fillna(0)
         st.dataframe(tabela_medico_mes)
+            
 
 else:
     st.info("Por favor, carregue uma planilha para iniciar a análise.")
