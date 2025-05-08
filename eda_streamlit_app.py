@@ -78,8 +78,10 @@ if uploaded_file:
     iqr = q3 - q1
     limite_superior = q3 + 1.5 * iqr
     outliers = df[df["Valor conta"] > limite_superior]
-    outliers_ordenadas = outliers.sort_values(by=["Valor conta", "Data entrada"], ascending=[False, True])
-    st.dataframe(outliers_ordenadas[["Data entrada"] + [col for col in outliers_ordenadas.columns if col != "Data entrada"]].style.format({"Valor conta": formatar_moeda}))
+    outliers["Data entrada"] = outliers["Data entrada"].dt.strftime('%d/%m/%Y')
+outliers_ordenadas = outliers.sort_values(by=["Valor conta", "Data entrada"], ascending=[False, True])
+    colunas_outliers = ["Status", "Data entrada", "Valor conta"] + [col for col in outliers_ordenadas.columns if col not in ["Status", "Data entrada", "Valor conta"]]
+st.dataframe(outliers_ordenadas[colunas_outliers].style.format({"Valor conta": formatar_moeda}))
 
     st.subheader("Boxplot de Valores por Convênio")
     plt.figure(figsize=(10, 5))
@@ -115,6 +117,19 @@ if uploaded_file:
     )])
     sankey_fig.update_layout(title_text="Fluxo das Contas: Status → Convênio", font_size=10)
     st.plotly_chart(sankey_fig, use_container_width=True)
+
+
+    st.subheader("Análise de Contas por Médico")
+    if "Atendimento" in df.columns and "Data entrada" in df.columns:
+        df["Data entrada"] = pd.to_datetime(df["Data entrada"], errors="coerce")
+        df["Mês"] = df["Data entrada"].dt.to_period("M").astype(str)
+        with st.expander("Contas por Médico e por Mês", expanded=False):
+            grupo_medico = df.groupby(["Atendimento", "Mês"]).agg(
+                Quantidade=("Conta", "nunique"),
+                Valor_Total=("Valor conta", "sum")
+            ).reset_index()
+            tabela_pivot = grupo_medico.pivot(index="Atendimento", columns="Mês", values="Valor_Total").fillna(0)
+            st.dataframe(tabela_pivot.style.format(formatar_moeda))
 
 else:
     st.info("Por favor, carregue uma planilha para iniciar a análise.")
