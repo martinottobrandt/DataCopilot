@@ -789,10 +789,9 @@ if uploaded_file:
                         st.markdown("#### Mapa de Calor por Mês/Dia")
                         
                         try:
-                            # Extrair mês e dia da semana
+                            # Extrair mês e dia da semana (já existem no df_filtrado)
                             df_calendar = df_filtrado.copy()
-                            df_calendar["Mês"] = df_calendar["Data entrada"].dt.month_name()
-                            df_calendar["Dia da Semana"] = df_calendar["Data entrada"].dt.day_name()
+                            # Não precisamos extrair novamente, já temos "Mês" e "Dia da Semana" no dataframe
                             
                             # Agrupar por mês e dia da semana
                             calendar_agg = df_calendar.groupby(["Mês", "Dia da Semana"])["Valor conta"].agg(
@@ -802,10 +801,11 @@ if uploaded_file:
                             
                             # Ordenar meses e dias da semana
                             import calendar
-                            meses_ordem = [calendar.month_name[i] for i in range(1, 13)]  # Corrigido - removido parênteses
+                            meses_ordem = ["January", "February", "March", "April", "May", "June", 
+                                           "July", "August", "September", "October", "November", "December"]
                             dias_ordem = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
                             
-                            # Traduzir para português se necessário
+                            # Traduzir para português
                             meses_pt = {
                                 "January": "Janeiro", "February": "Fevereiro", "March": "Março",
                                 "April": "Abril", "May": "Maio", "June": "Junho",
@@ -818,6 +818,7 @@ if uploaded_file:
                                 "Thursday": "Quinta", "Friday": "Sexta", "Saturday": "Sábado", "Sunday": "Domingo"
                             }
                             
+                            # Converter para categorias para ordenar corretamente
                             calendar_agg["Mês"] = pd.Categorical(calendar_agg["Mês"], categories=meses_ordem, ordered=True)
                             calendar_agg["Dia da Semana"] = pd.Categorical(calendar_agg["Dia da Semana"], categories=dias_ordem, ordered=True)
                             calendar_agg = calendar_agg.sort_values(["Mês", "Dia da Semana"])
@@ -825,27 +826,46 @@ if uploaded_file:
                             # Criar pivot para o heatmap
                             pivot_calendar = calendar_agg.pivot(index="Dia da Semana", columns="Mês", values="Valor_Total")
                             
-                            # Substituir nomes em inglês por português se necessário
+                            # Substituir nomes em inglês por português
                             pivot_calendar.index = pivot_calendar.index.map(lambda x: dias_pt.get(x, x))
                             pivot_calendar.columns = pivot_calendar.columns.map(lambda x: meses_pt.get(x, x))
                             
                             # Preencher valores NaN com 0
                             pivot_calendar = pivot_calendar.fillna(0)
                             
-                            # CORREÇÃO AQUI - Problema com a função formatar_moeda
-                            # Definir uma função de formatação diretamente aqui para evitar problemas de escopo
-                            def format_cell(v):
-                                if pd.isna(v) or v == 0:
-                                    return ""
-                                return f"R$ {v:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+                            # Formatar os valores para exibição no heatmap
+                            # Em vez de usar uma função de formatação personalizada, vamos usar 
+                            # um array de strings formatadas para o text_auto
+                            text_values = []
+                            for idx, row in enumerate(pivot_calendar.values):
+                                row_texts = []
+                                for val in row:
+                                    if pd.isna(val) or val == 0:
+                                        row_texts.append("")
+                                    else:
+                                        # Formatação direta para moeda brasileira (R$)
+                                        row_texts.append(f"R$ {val:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+                                text_values.append(row_texts)
                             
-                            # Criar heatmap com a função de formatação corrigida
+                            # Criar heatmap com formatação simplificada
                             fig_calendar = px.imshow(
                                 pivot_calendar,
                                 labels=dict(x="Mês", y="Dia da Semana", color="Valor Total"),
                                 aspect="auto",
-                                text_auto=format_cell  # Usando a função definida localmente
+                                text_auto=False,  # Desabilitar formatação automática
                             )
+                            
+                            # Adicionar anotações formatadas manualmente
+                            for i in range(len(pivot_calendar.index)):
+                                for j in range(len(pivot_calendar.columns)):
+                                    if pivot_calendar.iloc[i, j] > 0:  # Só adicionar texto para valores positivos
+                                        fig_calendar.add_annotation(
+                                            x=j,
+                                            y=i,
+                                            text=text_values[i][j],
+                                            showarrow=False,
+                                            font=dict(color="white" if pivot_calendar.iloc[i, j] > pivot_calendar.values.max()/2 else "black")
+                                        )
                             
                             fig_calendar.update_layout(height=400)
                             st.plotly_chart(fig_calendar, use_container_width=True)
@@ -858,13 +878,9 @@ if uploaded_file:
                         except Exception as e:
                             st.error(f"Não foi possível gerar o mapa de calor. Verifique se há dados suficientes com datas válidas.")
                             st.write(f"Detalhes técnicos: {str(e)}")
-                            
-                            # Informações de diagnóstico adicionais
-                            if 'df_calendar' in locals():
-                                st.write(f"Número de linhas em df_calendar: {len(df_calendar)}")
-                                st.write(f"Colunas disponíveis: {df_calendar.columns.tolist()}")
-                                st.write("Primeiras linhas dos dados:")
-                                st.write(df_calendar.head(3))
+                            # Adicionando rastreamento de pilha para depuração
+                            import traceback
+                            st.code(traceback.format_exc())
                     
                     # Adicionar seção para análise preditiva
                     with st.expander("🔮 Projeções e Tendências", expanded=False):
