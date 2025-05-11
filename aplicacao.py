@@ -678,434 +678,434 @@ if uploaded_file:
             # Preencher NaN com zeros
             pivot_med_conv = pivot_med_conv.fillna(0)
             
-# Criar mapa de calor com Plotly
-fig_heatmap = px.imshow(
-    pivot_med_conv,
-    labels=dict(x="Convênio", y="Médico executor", color="Valor Total"),
-    text_auto=True  # ou text_auto='.2s' para formato numérico simples
-)
-
-fig_heatmap.update_layout(height=400)
-st.plotly_chart(fig_heatmap, use_container_width=True)
-
-        
-with tab5:  # Ensure consistent indentation
-        st.markdown("### 📊 Visualizações Avançadas")
-        
-        viz_type = st.selectbox(
-            "Selecione o tipo de visualização:",
-            ["Boxplot por Convênio", "TreeMap de Valor por Convênio", "Distribuição de Valores", "Mapa de Calor por Mês/Dia"]
-        )
-            
-        if viz_type == "Boxplot por Convênio":
-                st.markdown("#### Boxplot por Convênio")
-                
-                # Filtrar para mostrar apenas os top 10 convênios
-                top10_convenios = resumo_convenio.head(10).index.tolist()
-                df_box = df_filtrado[df_filtrado["Convênio"].isin(top10_convenios)]
-                
-                # Criar boxplot
-                fig_box = px.box(
-                    df_box,
-                    x="Convênio",
-                    y="Valor conta",
-                    points="all",
-                    labels={"Valor conta": "Valor da Conta (R$)", "Convênio": "Convênio"}
-                )
-                st.plotly_chart(fig_box, use_container_width=True)
-                
-                st.markdown("""
-                **Como interpretar:** O boxplot mostra a distribuição dos valores das contas para cada convênio.
-                - A linha central representa a mediana
-                - A caixa representa o intervalo entre o primeiro quartil (25%) e o terceiro quartil (75%)
-                - As linhas (whiskers) representam os valores mínimo e máximo (excluindo outliers)
-                - Os pontos individuais são valores específicos de cada conta
-                """)
-            
-        elif viz_type == "TreeMap de Valor por Convênio":
-                st.markdown("#### TreeMap de Valor Total por Convênio")
-                
-                df_treemap = df_filtrado.groupby("Convênio")["Valor conta"].sum().reset_index()
-                df_treemap = df_treemap.sort_values(by="Valor conta", ascending=False)
-                
-                fig_tree = px.treemap(
-                    df_treemap, 
-                    path=["Convênio"], 
-                    values="Valor conta",
-                    color="Valor conta",
-                    color_continuous_scale="Viridis",
-                    labels={"Valor conta": "Valor Total (R$)"}
-                )
-                fig_tree.update_traces(textinfo="label+value+percent")
-                st.plotly_chart(fig_tree, use_container_width=True)
-                
-                st.markdown("""
-                **Como interpretar:** O treemap mostra a proporção relativa do valor total representado por cada convênio.
-                Quanto maior o retângulo, maior a participação do convênio no valor total pendente.
-                """)
-            
-        elif viz_type == "Distribuição de Valores":
-                st.markdown("#### Distribuição dos Valores das Contas")
-                
-                # Criar histograma com plotly
-                fig_hist = px.histogram(
-                    df_filtrado,
-                    x="Valor conta",
-                    nbins=50,
-                    marginal="box",
-                    labels={"Valor conta": "Valor da Conta (R$)", "count": "Frequência"}
-                )
-                st.plotly_chart(fig_hist, use_container_width=True)
-                
-                # Estatísticas da distribuição
-                col1, col2, col3, col4 = st.columns(4)
-                with col1:
-                    st.metric("Média", formatar_moeda(df_filtrado["Valor conta"].mean()))
-                with col2:
-                    st.metric("Mediana", formatar_moeda(df_filtrado["Valor conta"].median()))
-                with col3:
-                    st.metric("Mínimo", formatar_moeda(df_filtrado["Valor conta"].min()))
-                with col4:
-                    st.metric("Máximo", formatar_moeda(df_filtrado["Valor conta"].max()))
-                
-                st.markdown("""
-                **Como interpretar:** Este histograma mostra a distribuição dos valores das contas pendentes.
-                Uma distribuição com cauda longa para a direita (positiva) é comum em dados financeiros,
-                indicando poucas contas com valores muito altos e muitas contas com valores menores.
-                """)
-            
-        elif viz_type == "Mapa de Calor por Mês/Dia":
-                st.markdown("#### Mapa de Calor por Mês/Dia")
-                
-                # Extrair mês e dia da semana
-                df_calendar = df_filtrado.copy()
-                df_calendar["Mês"] = df_calendar["Data entrada"].dt.month_name()
-                df_calendar["Dia da Semana"] = df_calendar["Data entrada"].dt.day_name()
-                
-                # Agrupar por mês e dia da semana
-                calendar_agg = df_calendar.groupby(["Mês", "Dia da Semana"])["Valor conta"].agg(
-                    Quantidade="count",
-                    Valor_Total="sum"
-                ).reset_index()
-                
-                # Ordenar meses e dias da semana
-                meses_ordem = [calendar.month_name()[i] for i in range(1, 13)]
-                dias_ordem = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
-                
-                # Traduzir para português se necessário
-                meses_pt = {
-                    "January": "Janeiro", "February": "Fevereiro", "March": "Março",
-                    "April": "Abril", "May": "Maio", "June": "Junho",
-                    "July": "Julho", "August": "Agosto", "September": "Setembro",
-                    "October": "Outubro", "November": "Novembro", "December": "Dezembro"
-                }
-                
-                dias_pt = {
-                    "Monday": "Segunda", "Tuesday": "Terça", "Wednesday": "Quarta",
-                    "Thursday": "Quinta", "Friday": "Sexta", "Saturday": "Sábado", "Sunday": "Domingo"
-                }
-                
-                calendar_agg["Mês"] = pd.Categorical(calendar_agg["Mês"], categories=meses_ordem, ordered=True)
-                calendar_agg["Dia da Semana"] = pd.Categorical(calendar_agg["Dia da Semana"], categories=dias_ordem, ordered=True)
-                calendar_agg = calendar_agg.sort_values(["Mês", "Dia da Semana"])
-                
-                # Criar pivot para o heatmap
-                pivot_calendar = calendar_agg.pivot(index="Dia da Semana", columns="Mês", values="Valor_Total")
-                
-                # Substituir nomes em inglês por português se necessário
-                pivot_calendar.index = pivot_calendar.index.map(lambda x: dias_pt.get(x, x))
-                pivot_calendar.columns = pivot_calendar.columns.map(lambda x: meses_pt.get(x, x))
-                
-                # Criar heatmap
-                fig_calendar = px.imshow(
-                    pivot_calendar,
-                    labels=dict(x="Mês", y="Dia da Semana", color="Valor Total"),
-                    aspect="auto",
-                    text_auto=lambda v: formatar_moeda(v) if not pd.isna(v) else ""
-                )
-                fig_calendar.update_layout(height=400)
-                st.plotly_chart(fig_calendar, use_container_width=True)
-                
-                st.markdown("""
-                **Como interpretar:** Este mapa de calor mostra a distribuição do valor total das contas de acordo com o mês e dia da semana.
-                Cores mais intensas indicam maiores valores. Esse padrão pode ajudar a identificar sazonalidades ou dias da semana com maior volume financeiro.
-                """)
-        
-        # Adicionar seção para análise preditiva
-        with st.expander("🔮 Projeções e Tendências", expanded=False):
-            st.markdown("### 🔮 Projeções e Tendências")
-            
-            # Análise de tendência mensal
-            st.markdown("#### Tendência de Valores Pendentes")
-            
-            df_mensal = df_filtrado.copy()
-            df_mensal["AnoMes"] = df_mensal["Data entrada"].dt.to_period("M")
-            tendencia_valor = df_mensal.groupby("AnoMes")["Valor conta"].sum().reset_index()
-            tendencia_valor["AnoMes"] = tendencia_valor["AnoMes"].astype(str)
-            
-            # Calcular média móvel de 3 meses
-            if len(tendencia_valor) >= 3:
-                tendencia_valor["Media_Movel"] = tendencia_valor["Valor conta"].rolling(window=3).mean()
-            
-            # Criar gráfico de tendência
-            fig_trend = px.line(
-                tendencia_valor,
-                x="AnoMes",
-                y="Valor conta",
-                markers=True,
-                labels={"Valor conta": "Valor Total (R$)", "AnoMes": "Mês"}
+            # Criar mapa de calor com Plotly
+            fig_heatmap = px.imshow(
+                pivot_med_conv,
+                labels=dict(x="Convênio", y="Médico executor", color="Valor Total"),
+                text_auto=True  # ou text_auto='.2s' para formato numérico simples
             )
             
-            # Adicionar média móvel se tiver dados suficientes
-            if len(tendencia_valor) >= 3:
-                fig_trend.add_scatter(
-                    x=tendencia_valor["AnoMes"],
-                    y=tendencia_valor["Media_Movel"],
-                    mode="lines",
-                    name="Média Móvel (3 meses)",
-                    line=dict(color="red", dash="dash")
-                )
+            fig_heatmap.update_layout(height=400)
+            st.plotly_chart(fig_heatmap, use_container_width=True)
             
-            st.plotly_chart(fig_trend, use_container_width=True)
-            
-            # Análise de sazonalidade
-            st.markdown("#### Sazonalidade por Dia da Semana")
-            
-            df_dia_semana = df_filtrado.copy()
-            df_dia_semana["Dia da Semana"] = df_dia_semana["Data entrada"].dt.day_name()
-            
-            # Ordenar os dias da semana
-            dias_ordem = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
-            dias_pt = {
-                "Monday": "Segunda", "Tuesday": "Terça", "Wednesday": "Quarta",
-                "Thursday": "Quinta", "Friday": "Sexta", "Saturday": "Sábado", "Sunday": "Domingo"
-            }
-            
-            dia_semana_agg = df_dia_semana.groupby("Dia da Semana")["Valor conta"].agg(
-                Quantidade="count",
-                Valor_Total="sum"
-            ).reset_index()
-            
-            # Ordenar os dias e traduzir se necessário
-            dia_semana_agg["Dia da Semana"] = pd.Categorical(dia_semana_agg["Dia da Semana"], categories=dias_ordem, ordered=True)
-            dia_semana_agg = dia_semana_agg.sort_values("Dia da Semana")
-            dia_semana_agg["Dia da Semana"] = dia_semana_agg["Dia da Semana"].map(lambda x: dias_pt.get(x, x))
-            
-            # Criar gráfico de barras
-            col1, col2 = st.columns(2)
-            
-            with col1:
-                fig_dia_qtd = px.bar(
-                    dia_semana_agg,
-                    x="Dia da Semana",
-                    y="Quantidade",
-                    text_auto=True,
-                    labels={"Quantidade": "Quantidade de Contas", "Dia da Semana": "Dia da Semana"}
-                )
-                st.plotly_chart(fig_dia_qtd, use_container_width=True)
-            
-            with col2:
-                fig_dia_valor = px.bar(
-                    dia_semana_agg,
-                    x="Dia da Semana",
-                    y="Valor_Total",
-                    text_auto=True,
-                    labels={"Valor_Total": "Valor Total (R$)", "Dia da Semana": "Dia da Semana"}
-                )
-                fig_dia_valor.update_traces(texttemplate='%{y:,.2f}'.replace(',', 'X').replace('.', ',').replace('X', '.'), textposition='outside')
-                st.plotly_chart(fig_dia_valor, use_container_width=True)
-        
-        # Adicionar seção para insights de eficiência operacional
-        with st.expander("🔄 Eficiência Operacional", expanded=False):
-            st.markdown("### 🔄 Análise de Eficiência Operacional")
-            
-            # Calcular métricas de eficiência
-            df_eficiencia = df_filtrado.copy()
-            df_eficiencia["Dias Pendentes"] = (pd.Timestamp.today().normalize() - df_eficiencia["Data entrada"].dt.normalize()).dt.days
-            
-            # Tempo médio por setor
-            tempo_medio_setor = df_eficiencia.groupby("Último Setor destino")["Dias Pendentes"].mean().sort_values(ascending=False)
-            
-            # Gráfico de tempo médio por setor
-            st.markdown("#### Tempo Médio por Setor (Top 10)")
-            fig_tempo_setor = px.bar(
-                tempo_medio_setor.head(10).reset_index(),
-                x="Último Setor destino",
-                y="Dias Pendentes",
-                text_auto=True,
-                labels={"Dias Pendentes": "Dias Médios", "Último Setor destino": "Setor"}
-            )
-            fig_tempo_setor.update_traces(texttemplate='%{y:.1f}', textposition='outside')
-            fig_tempo_setor.update_layout(xaxis_tickangle=-45)
-            st.plotly_chart(fig_tempo_setor, use_container_width=True)
-            
-            # Análise de gargalos
-            st.markdown("#### Gargalos Identificados (Contas > 90 dias)")
-            
-            gargalos = df_eficiencia[df_eficiencia["Dias Pendentes"] > 90].groupby("Último Setor destino").agg(
-                Quantidade=("Conta", "count"),
-                Valor_Total=("Valor conta", "sum"),
-                Tempo_Medio=("Dias Pendentes", "mean")
-            ).sort_values(by="Quantidade", ascending=False).reset_index()
-            
-            if not gargalos.empty:
-                gargalos["% do Total de Contas"] = (gargalos["Quantidade"] / df_eficiencia[df_eficiencia["Dias Pendentes"] > 90].shape[0]) * 100
-                
-                st.dataframe(
-                    gargalos.head(10).style.format({
-                        "Valor_Total": formatar_moeda,
-                        "Tempo_Medio": "{:.1f}",
-                        "% do Total de Contas": "{:.2f}%"
-                    }),
-                    height=300
-                )
-                
-                # Gráfico de Pareto para gargalos
-                st.markdown("#### Análise de Pareto - Gargalos por Quantidade de Contas")
-                
-                # Preparar dados para Pareto
-                pareto_data = gargalos.copy()
-                pareto_data = pareto_data.sort_values(by="Quantidade", ascending=False)
-                pareto_data["Percentual Acumulado"] = pareto_data["Quantidade"].cumsum() / pareto_data["Quantidade"].sum() * 100
-                
-                # Criar gráfico de Pareto
-                fig_pareto = go.Figure()
-                
-                # Adicionar barras
-                fig_pareto.add_trace(go.Bar(
-                    x=pareto_data["Último Setor destino"].head(10),
-                    y=pareto_data["Quantidade"].head(10),
-                    name="Quantidade",
-                    text=pareto_data["Quantidade"].head(10),
-                    textposition="outside"
-                ))
-                
-                # Adicionar linha de percentual acumulado
-                fig_pareto.add_trace(go.Scatter(
-                    x=pareto_data["Último Setor destino"].head(10),
-                    y=pareto_data["Percentual Acumulado"].head(10),
-                    name="% Acumulado",
-                    mode="lines+markers",
-                    yaxis="y2",
-                    line=dict(color="red"),
-                    marker=dict(size=8)
-                ))
-                
-                # Configurar layout
-                fig_pareto.update_layout(
-                    xaxis=dict(title="Setor"),
-                    yaxis=dict(title="Quantidade de Contas", side="left"),
-                    yaxis2=dict(
-                        title="Percentual Acumulado (%)",
-                        side="right",
-                        overlaying="y",
-                        range=[0, 100],
-                        showgrid=False,
-                        ticksuffix="%"
-                    ),
-                    legend=dict(x=0.01, y=0.99),
-                    barmode="group"
-                )
-                
-                st.plotly_chart(fig_pareto, use_container_width=True)
-                
-                st.markdown("""
-                **Como interpretar o gráfico de Pareto:**
-                - Este gráfico mostra quais setores concentram a maior parte das contas pendentes há mais de 90 dias
-                - A linha vermelha representa o percentual acumulado
-                - Setores à esquerda representam os principais gargalos que, se resolvidos, terão o maior impacto na redução de pendências
-                """)
-            else:
-                st.info("Não foram encontradas contas com mais de 90 dias pendentes.")
-        
-                # Adicionar botão para exportar análise completa
-                st.markdown("### 📊 Exportar Análise Completa")
-                
-                if st.button("Gerar Relatório Completo"):
-                    from io import BytesIO
                     
-                    # Criar buffer para o Excel
-                    buffer = BytesIO()
+            with tab5:  # Ensure consistent indentation
+                    st.markdown("### 📊 Visualizações Avançadas")
                     
-                    with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
-                        # Resumo geral
-                        pd.DataFrame([kpis_filtrados]).to_excel(writer, sheet_name="Resumo Geral", index=False)
-                        
-                        # Análise por convênio
-                        resumo_convenio.reset_index().to_excel(writer, sheet_name="Análise por Convênio", index=False)
-                        
-                        # Análise por setor
-                        resumo_etapa.reset_index().to_excel(writer, sheet_name="Análise por Setor", index=False)
-                        
-                        # Análise por médico
-                        resumo_medico.reset_index().to_excel(writer, sheet_name="Análise por Médico", index=False)
-                        
-                        # Contas com problemas
-                        if not zeradas_df.empty:
-                            zeradas_df.to_excel(writer, sheet_name="Contas Zeradas", index=False)
-                        
-                        if not outliers_df.empty:
-                            outliers_df.to_excel(writer, sheet_name="Contas Outliers", index=False)
-                        
-                        if not antigas_df.empty:
-                            antigas_df.to_excel(writer, sheet_name="Contas >90 dias", index=False)
-                        
-                        # Análise de aging
-                        df_filtrado.groupby("Categoria Aging").agg(
-                            Quantidade=("Conta", "count"),
-                            Valor_Total=("Valor conta", "sum")
-                        ).reset_index().to_excel(writer, sheet_name="Aging", index=False)
-                        
-                        # Dados filtrados
-                        df_filtrado.to_excel(writer, sheet_name="Dados Completos", index=False)
-                    
-                    # Oferecer para download
-                    st.download_button(
-                        label="📥 Baixar Relatório Excel",
-                        data=buffer.getvalue(),
-                        file_name=f"analise_faturamento_hospital_{datetime.today().strftime('%Y-%m-%d')}.xlsx",
-                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                    viz_type = st.selectbox(
+                        "Selecione o tipo de visualização:",
+                        ["Boxplot por Convênio", "TreeMap de Valor por Convênio", "Distribuição de Valores", "Mapa de Calor por Mês/Dia"]
                     )
+                        
+                    if viz_type == "Boxplot por Convênio":
+                            st.markdown("#### Boxplot por Convênio")
+                            
+                            # Filtrar para mostrar apenas os top 10 convênios
+                            top10_convenios = resumo_convenio.head(10).index.tolist()
+                            df_box = df_filtrado[df_filtrado["Convênio"].isin(top10_convenios)]
+                            
+                            # Criar boxplot
+                            fig_box = px.box(
+                                df_box,
+                                x="Convênio",
+                                y="Valor conta",
+                                points="all",
+                                labels={"Valor conta": "Valor da Conta (R$)", "Convênio": "Convênio"}
+                            )
+                            st.plotly_chart(fig_box, use_container_width=True)
+                            
+                            st.markdown("""
+                            **Como interpretar:** O boxplot mostra a distribuição dos valores das contas para cada convênio.
+                            - A linha central representa a mediana
+                            - A caixa representa o intervalo entre o primeiro quartil (25%) e o terceiro quartil (75%)
+                            - As linhas (whiskers) representam os valores mínimo e máximo (excluindo outliers)
+                            - Os pontos individuais são valores específicos de cada conta
+                            """)
+                        
+                    elif viz_type == "TreeMap de Valor por Convênio":
+                            st.markdown("#### TreeMap de Valor Total por Convênio")
+                            
+                            df_treemap = df_filtrado.groupby("Convênio")["Valor conta"].sum().reset_index()
+                            df_treemap = df_treemap.sort_values(by="Valor conta", ascending=False)
+                            
+                            fig_tree = px.treemap(
+                                df_treemap, 
+                                path=["Convênio"], 
+                                values="Valor conta",
+                                color="Valor conta",
+                                color_continuous_scale="Viridis",
+                                labels={"Valor conta": "Valor Total (R$)"}
+                            )
+                            fig_tree.update_traces(textinfo="label+value+percent")
+                            st.plotly_chart(fig_tree, use_container_width=True)
+                            
+                            st.markdown("""
+                            **Como interpretar:** O treemap mostra a proporção relativa do valor total representado por cada convênio.
+                            Quanto maior o retângulo, maior a participação do convênio no valor total pendente.
+                            """)
+                        
+                    elif viz_type == "Distribuição de Valores":
+                            st.markdown("#### Distribuição dos Valores das Contas")
+                            
+                            # Criar histograma com plotly
+                            fig_hist = px.histogram(
+                                df_filtrado,
+                                x="Valor conta",
+                                nbins=50,
+                                marginal="box",
+                                labels={"Valor conta": "Valor da Conta (R$)", "count": "Frequência"}
+                            )
+                            st.plotly_chart(fig_hist, use_container_width=True)
+                            
+                            # Estatísticas da distribuição
+                            col1, col2, col3, col4 = st.columns(4)
+                            with col1:
+                                st.metric("Média", formatar_moeda(df_filtrado["Valor conta"].mean()))
+                            with col2:
+                                st.metric("Mediana", formatar_moeda(df_filtrado["Valor conta"].median()))
+                            with col3:
+                                st.metric("Mínimo", formatar_moeda(df_filtrado["Valor conta"].min()))
+                            with col4:
+                                st.metric("Máximo", formatar_moeda(df_filtrado["Valor conta"].max()))
+                            
+                            st.markdown("""
+                            **Como interpretar:** Este histograma mostra a distribuição dos valores das contas pendentes.
+                            Uma distribuição com cauda longa para a direita (positiva) é comum em dados financeiros,
+                            indicando poucas contas com valores muito altos e muitas contas com valores menores.
+                            """)
+                        
+                    elif viz_type == "Mapa de Calor por Mês/Dia":
+                            st.markdown("#### Mapa de Calor por Mês/Dia")
+                            
+                            # Extrair mês e dia da semana
+                            df_calendar = df_filtrado.copy()
+                            df_calendar["Mês"] = df_calendar["Data entrada"].dt.month_name()
+                            df_calendar["Dia da Semana"] = df_calendar["Data entrada"].dt.day_name()
+                            
+                            # Agrupar por mês e dia da semana
+                            calendar_agg = df_calendar.groupby(["Mês", "Dia da Semana"])["Valor conta"].agg(
+                                Quantidade="count",
+                                Valor_Total="sum"
+                            ).reset_index()
+                            
+                            # Ordenar meses e dias da semana
+                            meses_ordem = [calendar.month_name()[i] for i in range(1, 13)]
+                            dias_ordem = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+                            
+                            # Traduzir para português se necessário
+                            meses_pt = {
+                                "January": "Janeiro", "February": "Fevereiro", "March": "Março",
+                                "April": "Abril", "May": "Maio", "June": "Junho",
+                                "July": "Julho", "August": "Agosto", "September": "Setembro",
+                                "October": "Outubro", "November": "Novembro", "December": "Dezembro"
+                            }
+                            
+                            dias_pt = {
+                                "Monday": "Segunda", "Tuesday": "Terça", "Wednesday": "Quarta",
+                                "Thursday": "Quinta", "Friday": "Sexta", "Saturday": "Sábado", "Sunday": "Domingo"
+                            }
+                            
+                            calendar_agg["Mês"] = pd.Categorical(calendar_agg["Mês"], categories=meses_ordem, ordered=True)
+                            calendar_agg["Dia da Semana"] = pd.Categorical(calendar_agg["Dia da Semana"], categories=dias_ordem, ordered=True)
+                            calendar_agg = calendar_agg.sort_values(["Mês", "Dia da Semana"])
+                            
+                            # Criar pivot para o heatmap
+                            pivot_calendar = calendar_agg.pivot(index="Dia da Semana", columns="Mês", values="Valor_Total")
+                            
+                            # Substituir nomes em inglês por português se necessário
+                            pivot_calendar.index = pivot_calendar.index.map(lambda x: dias_pt.get(x, x))
+                            pivot_calendar.columns = pivot_calendar.columns.map(lambda x: meses_pt.get(x, x))
+                            
+                            # Criar heatmap
+                            fig_calendar = px.imshow(
+                                pivot_calendar,
+                                labels=dict(x="Mês", y="Dia da Semana", color="Valor Total"),
+                                aspect="auto",
+                                text_auto=lambda v: formatar_moeda(v) if not pd.isna(v) else ""
+                            )
+                            fig_calendar.update_layout(height=400)
+                            st.plotly_chart(fig_calendar, use_container_width=True)
+                            
+                            st.markdown("""
+                            **Como interpretar:** Este mapa de calor mostra a distribuição do valor total das contas de acordo com o mês e dia da semana.
+                            Cores mais intensas indicam maiores valores. Esse padrão pode ajudar a identificar sazonalidades ou dias da semana com maior volume financeiro.
+                            """)
                     
-                    st.success("Relatório gerado com sucesso! Clique no botão acima para baixar.")
-                else:
-                    st.info("👆 Faça o upload de uma planilha Excel para começar a análise de faturamento hospitalar.")
+                    # Adicionar seção para análise preditiva
+                    with st.expander("🔮 Projeções e Tendências", expanded=False):
+                        st.markdown("### 🔮 Projeções e Tendências")
+                        
+                        # Análise de tendência mensal
+                        st.markdown("#### Tendência de Valores Pendentes")
+                        
+                        df_mensal = df_filtrado.copy()
+                        df_mensal["AnoMes"] = df_mensal["Data entrada"].dt.to_period("M")
+                        tendencia_valor = df_mensal.groupby("AnoMes")["Valor conta"].sum().reset_index()
+                        tendencia_valor["AnoMes"] = tendencia_valor["AnoMes"].astype(str)
+                        
+                        # Calcular média móvel de 3 meses
+                        if len(tendencia_valor) >= 3:
+                            tendencia_valor["Media_Movel"] = tendencia_valor["Valor conta"].rolling(window=3).mean()
+                        
+                        # Criar gráfico de tendência
+                        fig_trend = px.line(
+                            tendencia_valor,
+                            x="AnoMes",
+                            y="Valor conta",
+                            markers=True,
+                            labels={"Valor conta": "Valor Total (R$)", "AnoMes": "Mês"}
+                        )
+                        
+                        # Adicionar média móvel se tiver dados suficientes
+                        if len(tendencia_valor) >= 3:
+                            fig_trend.add_scatter(
+                                x=tendencia_valor["AnoMes"],
+                                y=tendencia_valor["Media_Movel"],
+                                mode="lines",
+                                name="Média Móvel (3 meses)",
+                                line=dict(color="red", dash="dash")
+                            )
+                        
+                        st.plotly_chart(fig_trend, use_container_width=True)
+                        
+                        # Análise de sazonalidade
+                        st.markdown("#### Sazonalidade por Dia da Semana")
+                        
+                        df_dia_semana = df_filtrado.copy()
+                        df_dia_semana["Dia da Semana"] = df_dia_semana["Data entrada"].dt.day_name()
+                        
+                        # Ordenar os dias da semana
+                        dias_ordem = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+                        dias_pt = {
+                            "Monday": "Segunda", "Tuesday": "Terça", "Wednesday": "Quarta",
+                            "Thursday": "Quinta", "Friday": "Sexta", "Saturday": "Sábado", "Sunday": "Domingo"
+                        }
+                        
+                        dia_semana_agg = df_dia_semana.groupby("Dia da Semana")["Valor conta"].agg(
+                            Quantidade="count",
+                            Valor_Total="sum"
+                        ).reset_index()
+                        
+                        # Ordenar os dias e traduzir se necessário
+                        dia_semana_agg["Dia da Semana"] = pd.Categorical(dia_semana_agg["Dia da Semana"], categories=dias_ordem, ordered=True)
+                        dia_semana_agg = dia_semana_agg.sort_values("Dia da Semana")
+                        dia_semana_agg["Dia da Semana"] = dia_semana_agg["Dia da Semana"].map(lambda x: dias_pt.get(x, x))
+                        
+                        # Criar gráfico de barras
+                        col1, col2 = st.columns(2)
+                        
+                        with col1:
+                            fig_dia_qtd = px.bar(
+                                dia_semana_agg,
+                                x="Dia da Semana",
+                                y="Quantidade",
+                                text_auto=True,
+                                labels={"Quantidade": "Quantidade de Contas", "Dia da Semana": "Dia da Semana"}
+                            )
+                            st.plotly_chart(fig_dia_qtd, use_container_width=True)
+                        
+                        with col2:
+                            fig_dia_valor = px.bar(
+                                dia_semana_agg,
+                                x="Dia da Semana",
+                                y="Valor_Total",
+                                text_auto=True,
+                                labels={"Valor_Total": "Valor Total (R$)", "Dia da Semana": "Dia da Semana"}
+                            )
+                            fig_dia_valor.update_traces(texttemplate='%{y:,.2f}'.replace(',', 'X').replace('.', ',').replace('X', '.'), textposition='outside')
+                            st.plotly_chart(fig_dia_valor, use_container_width=True)
                     
-                    # Mostrar modelo de exemplo
-                    st.markdown("""
-                    ### 📋 Como usar esta ferramenta
+                    # Adicionar seção para insights de eficiência operacional
+                    with st.expander("🔄 Eficiência Operacional", expanded=False):
+                        st.markdown("### 🔄 Análise de Eficiência Operacional")
+                        
+                        # Calcular métricas de eficiência
+                        df_eficiencia = df_filtrado.copy()
+                        df_eficiencia["Dias Pendentes"] = (pd.Timestamp.today().normalize() - df_eficiencia["Data entrada"].dt.normalize()).dt.days
+                        
+                        # Tempo médio por setor
+                        tempo_medio_setor = df_eficiencia.groupby("Último Setor destino")["Dias Pendentes"].mean().sort_values(ascending=False)
+                        
+                        # Gráfico de tempo médio por setor
+                        st.markdown("#### Tempo Médio por Setor (Top 10)")
+                        fig_tempo_setor = px.bar(
+                            tempo_medio_setor.head(10).reset_index(),
+                            x="Último Setor destino",
+                            y="Dias Pendentes",
+                            text_auto=True,
+                            labels={"Dias Pendentes": "Dias Médios", "Último Setor destino": "Setor"}
+                        )
+                        fig_tempo_setor.update_traces(texttemplate='%{y:.1f}', textposition='outside')
+                        fig_tempo_setor.update_layout(xaxis_tickangle=-45)
+                        st.plotly_chart(fig_tempo_setor, use_container_width=True)
+                        
+                        # Análise de gargalos
+                        st.markdown("#### Gargalos Identificados (Contas > 90 dias)")
+                        
+                        gargalos = df_eficiencia[df_eficiencia["Dias Pendentes"] > 90].groupby("Último Setor destino").agg(
+                            Quantidade=("Conta", "count"),
+                            Valor_Total=("Valor conta", "sum"),
+                            Tempo_Medio=("Dias Pendentes", "mean")
+                        ).sort_values(by="Quantidade", ascending=False).reset_index()
+                        
+                        if not gargalos.empty:
+                            gargalos["% do Total de Contas"] = (gargalos["Quantidade"] / df_eficiencia[df_eficiencia["Dias Pendentes"] > 90].shape[0]) * 100
+                            
+                            st.dataframe(
+                                gargalos.head(10).style.format({
+                                    "Valor_Total": formatar_moeda,
+                                    "Tempo_Medio": "{:.1f}",
+                                    "% do Total de Contas": "{:.2f}%"
+                                }),
+                                height=300
+                            )
+                            
+                            # Gráfico de Pareto para gargalos
+                            st.markdown("#### Análise de Pareto - Gargalos por Quantidade de Contas")
+                            
+                            # Preparar dados para Pareto
+                            pareto_data = gargalos.copy()
+                            pareto_data = pareto_data.sort_values(by="Quantidade", ascending=False)
+                            pareto_data["Percentual Acumulado"] = pareto_data["Quantidade"].cumsum() / pareto_data["Quantidade"].sum() * 100
+                            
+                            # Criar gráfico de Pareto
+                            fig_pareto = go.Figure()
+                            
+                            # Adicionar barras
+                            fig_pareto.add_trace(go.Bar(
+                                x=pareto_data["Último Setor destino"].head(10),
+                                y=pareto_data["Quantidade"].head(10),
+                                name="Quantidade",
+                                text=pareto_data["Quantidade"].head(10),
+                                textposition="outside"
+                            ))
+                            
+                            # Adicionar linha de percentual acumulado
+                            fig_pareto.add_trace(go.Scatter(
+                                x=pareto_data["Último Setor destino"].head(10),
+                                y=pareto_data["Percentual Acumulado"].head(10),
+                                name="% Acumulado",
+                                mode="lines+markers",
+                                yaxis="y2",
+                                line=dict(color="red"),
+                                marker=dict(size=8)
+                            ))
+                            
+                            # Configurar layout
+                            fig_pareto.update_layout(
+                                xaxis=dict(title="Setor"),
+                                yaxis=dict(title="Quantidade de Contas", side="left"),
+                                yaxis2=dict(
+                                    title="Percentual Acumulado (%)",
+                                    side="right",
+                                    overlaying="y",
+                                    range=[0, 100],
+                                    showgrid=False,
+                                    ticksuffix="%"
+                                ),
+                                legend=dict(x=0.01, y=0.99),
+                                barmode="group"
+                            )
+                            
+                            st.plotly_chart(fig_pareto, use_container_width=True)
+                            
+                            st.markdown("""
+                            **Como interpretar o gráfico de Pareto:**
+                            - Este gráfico mostra quais setores concentram a maior parte das contas pendentes há mais de 90 dias
+                            - A linha vermelha representa o percentual acumulado
+                            - Setores à esquerda representam os principais gargalos que, se resolvidos, terão o maior impacto na redução de pendências
+                            """)
+                        else:
+                            st.info("Não foram encontradas contas com mais de 90 dias pendentes.")
                     
-                    1. Faça o upload de uma planilha Excel contendo os dados de contas pendentes do hospital
-                    2. A planilha deve conter as seguintes colunas:
-                        - Status
-                        - Tipo atendimento
-                        - Conta
-                        - Atendimento
-                        - Status atendimento
-                        - Convênio
-                        - Categoria
-                        - Valor conta
-                        - Etapa anterior
-                        - Último Setor destino
-                        - Setor atendimento
-                        - Estabelecimento
-                        - Data entrada
-                        - Médico executor
-                    3. Após o upload, utilize os filtros no painel lateral para refinar sua análise
-                    4. Explore as diferentes abas para obter insights específicos
-                    
-                    ### 🔍 Principais recursos
-                    
-                    - **Dashboard Principal**: Visão geral dos KPIs mais importantes
-                    - **Insights**: Análises rápidas com possibilidade de download de planilhas específicas
-                    - **Análise por Convênio**: Detalhamento financeiro por convênio
-                    - **Análise por Fluxo**: Identificação de gargalos no processo
-                    - **Análise por Médico**: Performance financeira por médico
-                    - **Visualizações Avançadas**: Gráficos detalhados para análise aprofundada
-                    - **Projeções e Tendências**: Análise temporal e sazonalidade
-                    - **Eficiência Operacional**: Identificação de gargalos e oportunidades de melhoria
-                    
-                    ### 📊 Exportação de dados
-                    
-                    Você pode exportar qualquer análise específica ou gerar um relatório completo em Excel.
-                    """)
+                            # Adicionar botão para exportar análise completa
+                            st.markdown("### 📊 Exportar Análise Completa")
+                            
+                            if st.button("Gerar Relatório Completo"):
+                                from io import BytesIO
+                                
+                                # Criar buffer para o Excel
+                                buffer = BytesIO()
+                                
+                                with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
+                                    # Resumo geral
+                                    pd.DataFrame([kpis_filtrados]).to_excel(writer, sheet_name="Resumo Geral", index=False)
+                                    
+                                    # Análise por convênio
+                                    resumo_convenio.reset_index().to_excel(writer, sheet_name="Análise por Convênio", index=False)
+                                    
+                                    # Análise por setor
+                                    resumo_etapa.reset_index().to_excel(writer, sheet_name="Análise por Setor", index=False)
+                                    
+                                    # Análise por médico
+                                    resumo_medico.reset_index().to_excel(writer, sheet_name="Análise por Médico", index=False)
+                                    
+                                    # Contas com problemas
+                                    if not zeradas_df.empty:
+                                        zeradas_df.to_excel(writer, sheet_name="Contas Zeradas", index=False)
+                                    
+                                    if not outliers_df.empty:
+                                        outliers_df.to_excel(writer, sheet_name="Contas Outliers", index=False)
+                                    
+                                    if not antigas_df.empty:
+                                        antigas_df.to_excel(writer, sheet_name="Contas >90 dias", index=False)
+                                    
+                                    # Análise de aging
+                                    df_filtrado.groupby("Categoria Aging").agg(
+                                        Quantidade=("Conta", "count"),
+                                        Valor_Total=("Valor conta", "sum")
+                                    ).reset_index().to_excel(writer, sheet_name="Aging", index=False)
+                                    
+                                    # Dados filtrados
+                                    df_filtrado.to_excel(writer, sheet_name="Dados Completos", index=False)
+                                
+                                # Oferecer para download
+                                st.download_button(
+                                    label="📥 Baixar Relatório Excel",
+                                    data=buffer.getvalue(),
+                                    file_name=f"analise_faturamento_hospital_{datetime.today().strftime('%Y-%m-%d')}.xlsx",
+                                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                                )
+                                
+                                st.success("Relatório gerado com sucesso! Clique no botão acima para baixar.")
+                            else:
+                                st.info("👆 Faça o upload de uma planilha Excel para começar a análise de faturamento hospitalar.")
+                                
+                                # Mostrar modelo de exemplo
+                                st.markdown("""
+                                ### 📋 Como usar esta ferramenta
+                                
+                                1. Faça o upload de uma planilha Excel contendo os dados de contas pendentes do hospital
+                                2. A planilha deve conter as seguintes colunas:
+                                    - Status
+                                    - Tipo atendimento
+                                    - Conta
+                                    - Atendimento
+                                    - Status atendimento
+                                    - Convênio
+                                    - Categoria
+                                    - Valor conta
+                                    - Etapa anterior
+                                    - Último Setor destino
+                                    - Setor atendimento
+                                    - Estabelecimento
+                                    - Data entrada
+                                    - Médico executor
+                                3. Após o upload, utilize os filtros no painel lateral para refinar sua análise
+                                4. Explore as diferentes abas para obter insights específicos
+                                
+                                ### 🔍 Principais recursos
+                                
+                                - **Dashboard Principal**: Visão geral dos KPIs mais importantes
+                                - **Insights**: Análises rápidas com possibilidade de download de planilhas específicas
+                                - **Análise por Convênio**: Detalhamento financeiro por convênio
+                                - **Análise por Fluxo**: Identificação de gargalos no processo
+                                - **Análise por Médico**: Performance financeira por médico
+                                - **Visualizações Avançadas**: Gráficos detalhados para análise aprofundada
+                                - **Projeções e Tendências**: Análise temporal e sazonalidade
+                                - **Eficiência Operacional**: Identificação de gargalos e oportunidades de melhoria
+                                
+                                ### 📊 Exportação de dados
+                                
+                                Você pode exportar qualquer análise específica ou gerar um relatório completo em Excel.
+                                """)
