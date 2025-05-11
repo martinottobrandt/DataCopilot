@@ -723,26 +723,37 @@ if uploaded_file:
                             """)
                         
                     elif viz_type == "TreeMap de Valor por Convênio":
-                            st.markdown("#### TreeMap de Valor Total por Convênio")
-                            
-                            df_treemap = df_filtrado.groupby("Convênio")["Valor conta"].sum().reset_index()
-                            df_treemap = df_treemap.sort_values(by="Valor conta", ascending=False)
-                            
-                            fig_tree = px.treemap(
-                                df_treemap, 
-                                path=["Convênio"], 
-                                values="Valor conta",
-                                color="Valor conta",
-                                color_continuous_scale="Viridis",
-                                labels={"Valor conta": "Valor Total (R$)"}
-                            )
-                            fig_tree.update_traces(hoverinfo="label+value+percent parent")
-                            st.plotly_chart(fig_tree, use_container_width=True)
-                            
-                            st.markdown("""
-                            **Como interpretar:** O treemap mostra a proporção relativa do valor total representado por cada convênio.
-                            Quanto maior o retângulo, maior a participação do convênio no valor total pendente.
-                            """)
+                        st.markdown("#### TreeMap de Valor Total por Convênio")
+                        
+                        df_treemap = df_filtrado.groupby("Convênio")["Valor conta"].sum().reset_index()
+                        df_treemap = df_treemap.sort_values(by="Valor conta", ascending=False)
+                        
+                        fig_tree = px.treemap(
+                            df_treemap, 
+                            path=["Convênio"], 
+                            values="Valor conta",
+                            color="Valor conta",
+                            color_continuous_scale="Viridis",
+                            labels={"Valor conta": "Valor Total (R$)"}
+                        )
+                        
+                        # Substituindo hoverinfo por hovertemplate, que é o correto para treemaps
+                        fig_tree.update_traces(
+                            hovertemplate='<b>%{label}</b><br>Valor: R$ %{value:,.2f}<br>Percentual: %{percentRoot:.1%}<extra></extra>'
+                        )
+                        
+                        # Melhorando o layout do gráfico
+                        fig_tree.update_layout(
+                            margin=dict(t=30, l=10, r=10, b=10),
+                            coloraxis_showscale=True
+                        )
+                        
+                        st.plotly_chart(fig_tree, use_container_width=True)
+                        
+                        st.markdown("""
+                        **Como interpretar:** O treemap mostra a proporção relativa do valor total representado por cada convênio.
+                        Quanto maior o retângulo, maior a participação do convênio no valor total pendente.
+                        """)
                         
                     elif viz_type == "Distribuição de Valores":
                             st.markdown("#### Distribuição dos Valores das Contas")
