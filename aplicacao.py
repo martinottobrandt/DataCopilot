@@ -673,10 +673,10 @@ if uploaded_file:
             med_conv = df_med_conv.groupby(["Médico executor", "Convênio"])["Valor conta"].sum().reset_index()
             
             # Criar heatmap
-pivot_med_conv = med_conv.pivot(index="Médico executor", columns="Convênio", values="Valor conta")
+            pivot_med_conv = med_conv.pivot(index="Médico executor", columns="Convênio", values="Valor conta")
             
-# Preencher NaN com zeros
-pivot_med_conv = pivot_med_conv.fillna(0)
+            # Preencher NaN com zeros
+            pivot_med_conv = pivot_med_conv.fillna(0)
             
 # Criar mapa de calor com Plotly
 fig_heatmap = px.imshow(
