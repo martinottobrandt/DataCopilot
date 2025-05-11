@@ -25,7 +25,7 @@ pip install -r requirements.txt
 Execute o app com Streamlit:
 
 ```bash
-streamlit run eda_streamlit_app.py
+streamlit run aplicacao.py
 ```
 
 ## 🌐 Publicação
@@ -36,7 +36,7 @@ Este projeto pode ser publicado diretamente no [Streamlit Cloud](https://streaml
 
 ```
 data-copilot/
-├── eda_streamlit_app.py       # Código principal do app
+├── aplicacao.py               # Código principal do app
 ├── requirements.txt           # Dependências
 └── README.md                  # Este arquivo
 ```
@@ -47,4 +47,4 @@ Distribuído sob a licença MIT. Sinta-se à vontade para usar, modificar e expa
 
 ---
 
-Criado com ❤️ por [Seu Nome ou Empresa]
+Criado com ❤️ por [Martin.AI]
