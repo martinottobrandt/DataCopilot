@@ -736,7 +736,7 @@ if uploaded_file:
                                 color_continuous_scale="Viridis",
                                 labels={"Valor conta": "Valor Total (R$)"}
                             )
-                            fig_tree.update_traces(textinfo="label+value+percent")
+                            fig_tree.update_traces(hoverinfo="label+value+percent parent")
                             st.plotly_chart(fig_tree, use_container_width=True)
                             
                             st.markdown("""
