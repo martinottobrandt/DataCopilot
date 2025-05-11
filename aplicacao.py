@@ -786,36 +786,39 @@ if uploaded_file:
                             """)
                         
                     elif viz_type == "Mapa de Calor por Mês/Dia":
-                            st.markdown("#### Mapa de Calor por Mês/Dia")
-                            
-                            # Extrair mês e dia da semana
-                            df_calendar = df_filtrado.copy()
-                            df_calendar["Mês"] = df_calendar["Data entrada"].dt.month_name()
-                            df_calendar["Dia da Semana"] = df_calendar["Data entrada"].dt.day_name()
-                            
-                            # Agrupar por mês e dia da semana
-                            calendar_agg = df_calendar.groupby(["Mês", "Dia da Semana"])["Valor conta"].agg(
-                                Quantidade="count",
-                                Valor_Total="sum"
-                            ).reset_index()
-                            
-                            # Ordenar meses e dias da semana
-                            meses_ordem = [calendar.month_name()[i] for i in range(1, 13)]
-                            dias_ordem = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
-                            
-                            # Traduzir para português se necessário
-                            meses_pt = {
-                                "January": "Janeiro", "February": "Fevereiro", "March": "Março",
-                                "April": "Abril", "May": "Maio", "June": "Junho",
-                                "July": "Julho", "August": "Agosto", "September": "Setembro",
-                                "October": "Outubro", "November": "Novembro", "December": "Dezembro"
-                            }
-                            
-                            dias_pt = {
-                                "Monday": "Segunda", "Tuesday": "Terça", "Wednesday": "Quarta",
-                                "Thursday": "Quinta", "Friday": "Sexta", "Saturday": "Sábado", "Sunday": "Domingo"
-                            }
-                            
+                        st.markdown("#### Mapa de Calor por Mês/Dia")
+                        
+                        # Extrair mês e dia da semana
+                        df_calendar = df_filtrado.copy()
+                        df_calendar["Mês"] = df_calendar["Data entrada"].dt.month_name()
+                        df_calendar["Dia da Semana"] = df_calendar["Data entrada"].dt.day_name()
+                        
+                        # Agrupar por mês e dia da semana
+                        calendar_agg = df_calendar.groupby(["Mês", "Dia da Semana"])["Valor conta"].agg(
+                            Quantidade="count",
+                            Valor_Total="sum"
+                        ).reset_index()
+                        
+                        # Ordenar meses e dias da semana - CORREÇÃO AQUI
+                        import calendar
+                        meses_ordem = [calendar.month_name[i] for i in range(1, 13)]  # Removido os parênteses
+                        dias_ordem = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+                        
+                        # Traduzir para português se necessário
+                        meses_pt = {
+                            "January": "Janeiro", "February": "Fevereiro", "March": "Março",
+                            "April": "Abril", "May": "Maio", "June": "Junho",
+                            "July": "Julho", "August": "Agosto", "September": "Setembro",
+                            "October": "Outubro", "November": "Novembro", "December": "Dezembro"
+                        }
+                        
+                        dias_pt = {
+                            "Monday": "Segunda", "Tuesday": "Terça", "Wednesday": "Quarta",
+                            "Thursday": "Quinta", "Friday": "Sexta", "Saturday": "Sábado", "Sunday": "Domingo"
+                        }
+                        
+                        # Tratamento para evitar erro se não houver dados para alguns meses/dias
+                        try:
                             calendar_agg["Mês"] = pd.Categorical(calendar_agg["Mês"], categories=meses_ordem, ordered=True)
                             calendar_agg["Dia da Semana"] = pd.Categorical(calendar_agg["Dia da Semana"], categories=dias_ordem, ordered=True)
                             calendar_agg = calendar_agg.sort_values(["Mês", "Dia da Semana"])
@@ -827,12 +830,15 @@ if uploaded_file:
                             pivot_calendar.index = pivot_calendar.index.map(lambda x: dias_pt.get(x, x))
                             pivot_calendar.columns = pivot_calendar.columns.map(lambda x: meses_pt.get(x, x))
                             
+                            # Preencher valores NaN com 0 para evitar espaços em branco no heatmap
+                            pivot_calendar = pivot_calendar.fillna(0)
+                            
                             # Criar heatmap
                             fig_calendar = px.imshow(
                                 pivot_calendar,
                                 labels=dict(x="Mês", y="Dia da Semana", color="Valor Total"),
                                 aspect="auto",
-                                text_auto=lambda v: formatar_moeda(v) if not pd.isna(v) else ""
+                                text_auto=lambda v: formatar_moeda(v) if not pd.isna(v) and v > 0 else ""
                             )
                             fig_calendar.update_layout(height=400)
                             st.plotly_chart(fig_calendar, use_container_width=True)
@@ -841,6 +847,10 @@ if uploaded_file:
                             **Como interpretar:** Este mapa de calor mostra a distribuição do valor total das contas de acordo com o mês e dia da semana.
                             Cores mais intensas indicam maiores valores. Esse padrão pode ajudar a identificar sazonalidades ou dias da semana com maior volume financeiro.
                             """)
+                        
+                        except Exception as e:
+                            st.error(f"Não foi possível gerar o mapa de calor. Verifique se há dados suficientes com datas válidas.")
+                            st.write(f"Detalhes técnicos: {str(e)}")
                     
                     # Adicionar seção para análise preditiva
                     with st.expander("🔮 Projeções e Tendências", expanded=False):
